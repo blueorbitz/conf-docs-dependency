@@ -6,11 +6,11 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "lib": ["dom", "es2017"],
-    "types": ["node", "react"],
+    "types": ["node", "react", "jest"],
     "baseUrl": "./",
     "allowJs": true,
     "jsx": "react",
     "jsxFactory": "ForgeUI.createElement"
   },
-  "include": ["./src/**/*"]
+  "include": ["./src/**/*", "tests"]
 }

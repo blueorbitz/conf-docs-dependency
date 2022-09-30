@@ -60,4 +60,7 @@ See [Get help](https://developer.atlassian.com/platform/forge/get-help/) for how
 
 ## Test
 
-https://community.developer.atlassian.com/t/testing-forge-custom-ui-components-using-jest/50320/5
+- [testing-forge](https://community.developer.atlassian.com/t/testing-forge-custom-ui-components-using-jest/50320/5)
+```
+npm run test
+```
