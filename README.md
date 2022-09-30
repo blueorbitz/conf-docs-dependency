@@ -35,6 +35,20 @@ forge deploy
 forge install
 ```
 
+### Development
+[Tunneling with Custom UI](https://developer.atlassian.com/platform/forge/tunneling/#tunneling-with-custom-ui)
+
+- Run Forge Tunnel
+```
+forge tunnel
+```
+
+- Run Custom UI Hot-reloading
+```
+cd static/
+npm run dev
+```
+
 ### Notes
 - Use the `forge deploy` command when you want to persist code changes.
 - Use the `forge install` command when you want to install the app on a new site.
