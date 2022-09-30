@@ -22,4 +22,4 @@ permissions:
     styles:
       - unsafe-inline
 app:
-  id: ari:cloud:ecosystem::app/327f7352-ec46-464c-b3fe-8f1688409c9f
+  id: ari:cloud:ecosystem::app/{{FORGE_APP_ID}}

@@ -10,6 +10,13 @@ See [Set up Forge](https://developer.atlassian.com/platform/forge/set-up-forge/)
 
 ## Quick start
 
+- Copy and rename `.env-sample` to `.env`. Fill in the value.
+
+- Build a `manifest.yml`
+```
+npm run setup
+```
+
 - Modify your app by editing the files in `static/src/`.
 
 - Build your app (inside of the `static/` directory):
