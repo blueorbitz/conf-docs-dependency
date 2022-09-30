@@ -1,0 +1,25 @@
+modules:
+  confluence:spacePage:
+    - key: hello-world-space
+      resource: main
+      resolver:
+        function: resolver
+      title: Template
+      route: hello-world
+  function:
+    - key: resolver
+      handler: index.handler
+resources:
+  - key: main
+    path: static/build
+    tunnel:
+      port: 3001
+      
+permissions:
+  scopes:
+    - read:me
+  content:
+    styles:
+      - unsafe-inline
+app:
+  id: ari:cloud:ecosystem::app/327f7352-ec46-464c-b3fe-8f1688409c9f
