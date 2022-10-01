@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { AppContext } from './context';
-import ConfigurationPage from './ConfigurationPage';
 import { invoke } from '@forge/bridge';
+import ConfigurationPage from './components/ConfigurationPage';
 import { FlagsProvider } from '@atlaskit/flag';
 import Blanket from '@atlaskit/blanket';
 import Spinner from '@atlaskit/spinner';

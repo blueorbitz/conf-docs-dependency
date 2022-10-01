@@ -3,17 +3,23 @@ import { invoke } from '@forge/bridge';
 
 const ConfigurationPage = () => {
   const [data, setData] = useState(null);
+
+  const fetchText = () => invoke('getText', { example: 'button onclick' }).then(setData);
+  const fetchTest = async () => {
+    const test = await invoke('getTest');
+    console.log(test);
+  };
+
   useEffect(() => {
-    invoke('getText', { example: 'my-invoke-variable' }).then(setData);
+    fetchText();
   }, []);
 
   return (
     <div>
-      
       {data == null
         ? 'Loading...'
         : <>
-          <button onClick={() => invoke('getText', { example: 'my-invoke-variable' }).then(setData)}>Click me</button>
+          <button onClick={fetchTest}>Click me</button>
         </>
       }
     </div>
