@@ -14,7 +14,6 @@ resources:
     path: static/build
     tunnel:
       port: 3001
-      
 permissions:
   scopes:
     - read:me
