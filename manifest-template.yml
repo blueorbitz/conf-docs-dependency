@@ -17,8 +17,17 @@ resources:
 permissions:
   scopes:
     - read:me
+    - read:confluence-space.summary
+    - read:confluence-content.summary
+    - read:confluence-content.all
   content:
     styles:
       - unsafe-inline
+    scripts:
+      - unsafe-inline
+  external:
+    fetch:
+      client:
+        - 'ws://localhost:3001'
 app:
   id: ari:cloud:ecosystem::app/{{FORGE_APP_ID}}

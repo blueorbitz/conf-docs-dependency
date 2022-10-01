@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { AppContext } from './context';
+import ConfigurationPage from './ConfigurationPage';
 import { invoke } from '@forge/bridge';
 import { FlagsProvider } from '@atlaskit/flag';
 import Blanket from '@atlaskit/blanket';
@@ -16,7 +17,6 @@ const SpinnerDiv = styled.div`
 
 const App = () => {
   const [context, setContext] = useState(null);
-  const [data, setData] = useState(null);
 
   const getContext = async () => {
     try {
@@ -47,20 +47,13 @@ const App = () => {
   };
   useEffect(() => {
     getContext();
-
-    // Do your stuff here
-    invoke('getText', { example: 'my-invoke-variable' }).then(setData);
   }, []);
 
   const renderContext = () => {
     if (context) {
       switch (context.moduleKey) {
         case 'hello-world-space':
-          return (
-            <div>
-              {data ? data : 'Loading...'}
-            </div>
-          );
+          return <ConfigurationPage />;
         default:
           return <>Some error had been occured. {context.moduleKey}</>;
       }
