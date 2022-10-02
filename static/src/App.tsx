@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { AppContext } from './context';
-import { invoke } from '@forge/bridge';
+import { invoke } from './utils';
 import ConfigurationPage from './components/ConfigurationPage';
 import { FlagsProvider } from '@atlaskit/flag';
 import Blanket from '@atlaskit/blanket';
@@ -21,15 +21,12 @@ const App = () => {
   const getContext = async () => {
     try {
       const result: Record<string, unknown> = await invoke('getContext');
-      const localId = (result.localId as unknown as string).split('/');
 
       setContext({
         moduleKey: result.moduleKey as string,
         spinner: false,
         accountId: result.accountId,
         cloudId: result.cloudId,
-        appId: localId[1],
-        envId: localId[2],
       });
     } catch (e) {
       setContext({
@@ -37,10 +34,6 @@ const App = () => {
         spinner: false,
         accountId: null,
         cloudId: null,
-        appId: null,
-        envId: null,
-        license: null,
-        session: null,
       });
       console.error('Error: ', e.message);
     }

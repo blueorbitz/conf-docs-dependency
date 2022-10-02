@@ -6,9 +6,14 @@ modules:
         function: resolver
       title: Template
       route: hello-world
+  webtrigger:
+    - key: mock-invoke
+      function: invoker
   function:
     - key: resolver
       handler: index.handler
+    - key: invoker
+      handler: index.invoker
 resources:
   - key: main
     path: static/build
@@ -25,9 +30,5 @@ permissions:
       - unsafe-inline
     scripts:
       - unsafe-inline
-  external:
-    fetch:
-      client:
-        - 'ws://localhost:3001'
 app:
   id: ari:cloud:ecosystem::app/{{FORGE_APP_ID}}

@@ -8,3 +8,34 @@ Object.keys(ResolveFunc).map(funcName => {
 });
 
 export const handler = resolver.getDefinitions();
+
+export const invoker = async (req) => {
+  const { name, payload } = req.queryParameters;
+  if (name == null || payload == null)
+    return { statusCode: 400 };
+
+  const _name = name[0];
+  const _payload = payload[0];
+
+  const MOCK_MODULE = 'hello-world-space';
+  const result = await ResolveFunc[_name]({
+    payload: _payload,
+    context: {
+      cloudId: '{{uuid}}',        
+      environmentId: '{{uuid}}',  
+      environmentType: 'DEVELOPMENT',
+      moduleKey: MOCK_MODULE,
+      siteUrl: 'https://subdomain.atlassian.net',
+      extension: { type: 'confluence:spacePage' },
+      accountId: '70121:{{uuid}}'
+    }
+  });
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': ['application/json'],
+    },
+    body: JSON.stringify(result),
+  };
+}

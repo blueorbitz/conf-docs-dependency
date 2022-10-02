@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { invoke } from '@forge/bridge';
+import { invoke } from '../utils';
 
 const ConfigurationPage = () => {
   const [data, setData] = useState(null);
 
-  const fetchText = () => invoke('getText', { example: 'button onclick' }).then(setData);
-  const fetchTest = async () => {
-    const test = await invoke('getTest');
-    console.log(test);
+  const fetchText = async () => {
+    const result = await invoke('getText', { example: 'button onclick' });
+    setData(result);
   };
 
   useEffect(() => {
@@ -19,7 +18,7 @@ const ConfigurationPage = () => {
       {data == null
         ? 'Loading...'
         : <>
-          <button onClick={fetchTest}>Click me</button>
+          <button onClick={fetchText}>Click me</button>
         </>
       }
     </div>

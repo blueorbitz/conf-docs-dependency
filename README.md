@@ -10,6 +10,8 @@ See [Set up Forge](https://developer.atlassian.com/platform/forge/set-up-forge/)
 
 ## Quick start
 
+#### If encounter Linter error. Likely is caused by `.gitignore`. Delete that file.
+
 - Copy and rename `.env-sample` to `.env`. Fill in the value.
 
 - Build a `manifest.yml`
@@ -47,6 +49,17 @@ forge tunnel
 ```
 cd static/
 npm run dev
+```
+
+- To build frontend outside of Confluence. [Setup Webtrigger](https://developer.atlassian.com/platform/forge/manifest-reference/modules/web-trigger/), [Reference Only](https://developer.atlassian.com/platform/forge/runtime-reference/web-trigger-api/).
+- Copy and rename `.env-sample` to `.env` in static directory.
+```
+forge install list
+
+// copy the Installation ID for the site and product you want the web trigger URL for.
+forge webtrigger
+
+// copy the link to env
 ```
 
 ### Notes
