@@ -62,6 +62,12 @@ forge webtrigger
 // copy the link to env
 ```
 
+- Setup NEO4J environment var
+```
+forge variables set NEO4J_CONNECTION value
+forge variables set --encrypt NEO4J_PASSWORD value
+```
+
 ### Notes
 - Use the `forge deploy` command when you want to persist code changes.
 - Use the `forge install` command when you want to install the app on a new site.
@@ -77,3 +83,7 @@ See [Get help](https://developer.atlassian.com/platform/forge/get-help/) for how
 ```
 npm run test
 ```
+
+
+### TODO
+continue to fix neo4j updating at `resolver.ts` 

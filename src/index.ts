@@ -14,6 +14,7 @@ export const invoker = async (req) => {
   if (name == null || payload == null)
     return { statusCode: 400 };
 
+  console.log('invoker:', name);
   const _name = name[0];
   const _payload = payload[0];
 
