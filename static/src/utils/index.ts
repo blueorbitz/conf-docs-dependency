@@ -3,7 +3,9 @@ const {
   REACT_APP_MOCK_TRIGGER_URL,
 } = process.env;
 
-const invoke = async (name: string, payload?: any) => {
+export const delay = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export const invoke = async (name: string, payload?: any) => {
   const _payload = typeof payload === 'object'
     ? JSON.stringify(payload)
     : payload ?? '';
@@ -28,5 +30,3 @@ const invoke = async (name: string, payload?: any) => {
     return json;
   }
 };
-
-export { invoke };

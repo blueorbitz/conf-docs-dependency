@@ -42,12 +42,51 @@ export const getContent = async (req: any) => {
 };
 
 export const getPageId = async (req: any) => {
-  const { spaceKey, title } = req.payload;
+  const { spaceKey, title } = JSON.parse(req.payload);
+  console.log('getPageId', spaceKey, title);
   const response = await api.asApp().requestConfluence(route`/wiki/rest/api/content/search?cql=type=page AND space="${spaceKey}" AND title="${title}"&limit=1`, {
     headers: { 'Accept': 'application/json' },
   });
 
-  console.log(`getContents: ${response.status} ${response.statusText}`);
+  console.log(`getPageId: ${response.status} ${response.statusText}`);
+  return await response.json();
+};
+
+export const getContentProperty = async (req: any) => {
+  const { id } = JSON.parse(req.payload);
+  const response = await api.asApp().requestConfluence(route`/wiki/rest/api/content/${id}/property`, {
+    headers: { 'Accept': 'application/json' },
+  });
+
+  console.log(`getContentProperty: ${response.status} ${response.statusText}`);
+  return await response.json();
+};
+
+export const deleteContentProperty = async (req: any) => {
+  const { id, PropertyKey } = JSON.parse(req.payload);
+  const response = await api.asApp().requestConfluence(route`/wiki/rest/api/content/${id}/property/${PropertyKey}`, {
+    method: 'DELETE',
+  });
+
+  console.log(`deleteContentProperty: ${response.status} ${response.statusText}`);
+  return {};
+};
+
+export const updateContentProperty = async (req: any) => {
+  const { id, PropertyKey } = JSON.parse(req.payload);
+  const response = await api.asApp().requestConfluence(route`/wiki/rest/api/content/${id}/property/${PropertyKey}`, {
+    headers: { 'Accept': 'application/json' },
+    method: 'PUT',
+    body: JSON.stringify({
+      value: ["loaded"],
+      version: {
+        number: 1,
+        minorEdit: true,
+      }
+    })
+  });
+
+  console.log(`updateContentProperty: ${response.status} ${response.statusText}`);
   return await response.json();
 };
 
