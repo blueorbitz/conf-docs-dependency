@@ -8,7 +8,7 @@ import {
 import PageHeader from '@atlaskit/page-header';
 import ButtonGroup from '@atlaskit/button/button-group';
 import Button from '@atlaskit/button/standard-button';
-import Spinner from '@atlaskit/spinner'; 
+import Spinner from '@atlaskit/spinner';
 import TableTree from '@atlaskit/table-tree';
 import ProgressBar from '@atlaskit/progress-bar';
 import Modal, {
@@ -20,6 +20,7 @@ import Modal, {
 } from '@atlaskit/modal-dialog';
 
 const PropertyKey = 'conf_link_graph';
+const PropertyValue = JSON.stringify({ value: 'loaded' });
 
 const extractAndStoreLinks = async (page: any) => {
   const linksData = await extractPageLinks(page);
@@ -81,9 +82,9 @@ const updateConfluenceProperty = async (page: any) => {
   const { metadata: { properties: { _expandable: { [PropertyKey]: propertyDefined } } } } = page;
 
   if (propertyDefined != null)
-    await invoke('deleteContentProperty', { id, PropertyKey }); // has to delete to be able to update the version
+    await invoke('contentProperty', { method: 'DELETE', id: page.id, PropertyKey }); // has to delete to be able to update the version
 
-  await invoke('updateContentProperty', { id, PropertyKey });
+  await invoke('contentProperty', { method: 'POST', id: page.id, PropertyKey, body: PropertyValue });
 };
 
 const storeLinksGraph = async (linkData: any) => {
@@ -116,7 +117,7 @@ const storeLinksGraph = async (linkData: any) => {
 };
 
 const ConfigurationPage = () => {
-  const [spaces, setSpaces] = useState([]);
+  const [spaces, setSpaces] = useState();
   const [seedCount, setSeedCount] = useState(-1); // 0 - 1
   const [seedMessage, setSeedMessage] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
@@ -127,7 +128,16 @@ const ConfigurationPage = () => {
 
   const fetchSpaces = async () => {
     const response = await invoke('getSpaces');
-    setSpaces(response.results.filter(o => o.type !== 'personal'));
+    const spaces = response.results.filter(o => o.type !== 'personal');
+
+    setSpaces(spaces);
+
+    const reponseProps = await Promise.all(
+      spaces.map(space => invoke('spaceProperty', { method: 'GET', spaceKey: space.key, PropertyKey }))
+    );
+
+    // merge spaces
+    setSpaces(spaces.map((space, i) => ({ ...space, property: reponseProps[i] })));
   };
 
   const onClickSeedPage = async () => {
@@ -138,28 +148,39 @@ const ConfigurationPage = () => {
 
     setSeedCount(0);
     let i = 0;
-    for (const space of spaces) {
-      setSeedMessage(`Fetching page for "${space.key}"...`);
-      const response = await invoke('getContents', space.key);
-      const { page: { results: pages = [] } } = response;
 
-      let j = 0;
-      for (const page of pages) {
-        setSeedMessage(`Space("${space.key}") - processing ${++j} of ${pages.length} pages...`);
+    try {
+      for (const space of spaces ?? []) {
+        setSeedMessage(`Fetching page for "${space.key}"...`);
+        const contents = await invoke('getContents', space.key);
+        const { page: { results: pages = [] } } = contents;
 
-        const { status, metadata: { properties: { _expandable: { [PropertyKey]: propertyDefined } } } } = page;
-        if (propertyDefined != null || status !== 'current')
-          continue;
-        await extractAndStoreLinks(page);
+        let j = 0;
+        for (const page of pages) {
+          setSeedMessage(`Space("${space.key}") - processing ${++j} of ${pages.length} pages...`);
+
+          const { status, metadata: { properties: { _expandable: { [PropertyKey]: propertyDefined } } } } = page;
+          if (propertyDefined != null || status !== 'current')
+            continue;
+          await extractAndStoreLinks(page);
+        }
+
+        if (space.property.value == null || space.property.value !== 'loaded') {
+          await invoke('spaceProperty', { method: 'DELETE', spaceKey: space.key, PropertyKey });
+          await invoke('spaceProperty', { method: 'POST', spaceKey: space.key, PropertyKey, body: PropertyValue });
+        }
+
+        await delay(500);
+        setSeedCount(++i / (spaces ?? []).length);
       }
-
-      await delay(500);
-      setSeedCount(++i/spaces.length);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      await delay(1000);
+      setSeedCount(1);
+      setSeedMessage('');
+      await fetchSpaces();
     }
-
-    await delay(1000);
-    setSeedCount(1);
-    setSeedMessage('');
   };
 
   const onClickResetProperty = async () => {
@@ -167,20 +188,28 @@ const ConfigurationPage = () => {
       return;
 
     setResetLoading(true);
-    for (const space of spaces) {
-      const response = await invoke('getContents', space.key);
-      const { page: { results: pages = [] } } = response;
 
-      for (const page of pages) {
-        const { metadata: { properties: { _expandable: { [PropertyKey]: propertyDefined } } } } = page;
-        console.log('delete meta:', page.id, page.title, page.metadata.properties._expandable);
-        if (propertyDefined != null)
-          await invoke('deleteContentProperty', { id: page.id, PropertyKey });
+    try {
+      for (const space of spaces ?? []) {
+        await invoke('spaceProperty', { method: 'DELETE', spaceKey: space.key, PropertyKey });
+
+        const contents = await invoke('getContents', space.key);
+        const { page: { results: pages = [] } } = contents;
+
+        for (const page of pages) {
+          const { metadata: { properties: { _expandable: { [PropertyKey]: propertyDefined } } } } = page;
+          console.log('delete meta:', page.id, page.title, page.metadata.properties._expandable);
+          if (propertyDefined != null)
+            await invoke('contentProperty', { method: 'DELETE', id: page.id, PropertyKey });
+        }
       }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      await delay(500);
+      setResetLoading(false);
+      await fetchSpaces();
     }
-
-    await delay(500);
-    setResetLoading(false);
   };
 
   useEffect(() => {
@@ -210,11 +239,13 @@ const ConfigurationPage = () => {
   // Table component
   const Space = (props) => <span>{props.name}</span>;
   const Loaded = (props) => <span>{props.loaded}</span>;
-  const items = spaces.map(o => ({
+  const items = (spaces ?? []).map(o => ({
     id: '' + o.id,
     content: {
       name: o.key,
-      loaded: o.metadata._expandable[PropertyKey] ? 'true' : 'false',
+      loaded: o.property == null
+        ? <Spinner size="small" />
+        : (o.property.value === 'loaded' ? '✅' : '❌'),
     },
     hasChildren: false,
     children: [],
@@ -227,12 +258,16 @@ const ConfigurationPage = () => {
           <PageHeader actions={actionsContent} >
             Conf Docs Dependency | Admin
           </PageHeader>
-          <TableTree
-            columns={[Space, Loaded]}
-            headers={['Space', 'Loaded']}
-            columnWidths={['250px', '100px']}
-            items={items}
-          />
+          {
+            spaces == null
+              ? <Spinner size="large" />
+              : <TableTree
+                columns={[Space, Loaded]}
+                headers={['Space', 'Loaded']}
+                columnWidths={['250px', '100px']}
+                items={items}
+              />
+          }
         </Main>
 
         <ModalTransition>

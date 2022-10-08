@@ -52,43 +52,33 @@ export const getPageId = async (req: any) => {
   return await response.json();
 };
 
-export const getContentProperty = async (req: any) => {
-  const { id } = JSON.parse(req.payload);
-  const response = await api.asApp().requestConfluence(route`/wiki/rest/api/content/${id}/property`, {
-    headers: { 'Accept': 'application/json' },
-  });
-
-  console.log(`getContentProperty: ${response.status} ${response.statusText}`);
-  return await response.json();
-};
-
-export const deleteContentProperty = async (req: any) => {
-  const { id, PropertyKey } = JSON.parse(req.payload);
+export const contentProperty = async (req: any) => {
+  const { method, id, PropertyKey, body } = JSON.parse(req.payload);
+  
   const response = await api.asApp().requestConfluence(route`/wiki/rest/api/content/${id}/property/${PropertyKey}`, {
-    method: 'DELETE',
+    method, body, headers: { 'Accept': 'application/json' },
   });
-
-  console.log(`deleteContentProperty: ${response.status} ${response.statusText}`);
-  return {};
-};
-
-export const updateContentProperty = async (req: any) => {
-  const { id, PropertyKey } = JSON.parse(req.payload);
-  const response = await api.asApp().requestConfluence(route`/wiki/rest/api/content/${id}/property/${PropertyKey}`, {
-    headers: { 'Accept': 'application/json' },
-    method: 'PUT',
-    body: JSON.stringify({
-      value: ["loaded"],
-      version: {
-        number: 1,
-        minorEdit: true,
-      }
-    })
-  });
-
-  console.log(`updateContentProperty: ${response.status} ${response.statusText}`);
+  
+  console.log(`contentProperty[${method}]: ${response.status} ${response.statusText}`);
+  if (response.status !== 200)
+    return { status: response.status, statusText: response.statusText };
+  
   return await response.json();
-};
+}
+
+export const spaceProperty = async (req: any) => { 
+  const { method, spaceKey, PropertyKey, body } = JSON.parse(req.payload);
+  
+  const response = await api.asApp().requestConfluence(route`/wiki/rest/api/space/${spaceKey}/property/${PropertyKey}`, {
+    method, body, headers: { 'Accept': 'application/json' },
+  });
+  
+  console.log(`spaceProperty[${method}]: ${response.status} ${response.statusText}`);
+  if (response.status !== 200)
+    return { status: response.status, statusText: response.statusText };
+  
+  return await response.json();
+}
 
 export const postMergeGraph = async (req: any) => {
   const VERCEL_NEO4J_SERVERLESS_URL = 'https://serverless-neo4j-api.vercel.app';
