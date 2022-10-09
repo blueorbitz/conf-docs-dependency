@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import useResizeAware from 'react-resize-aware';
 import { invoke } from '../utils';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import Select from '@atlaskit/select';
 import {
   Content,
@@ -10,13 +10,13 @@ import {
 } from '@atlaskit/page-layout';
 import PageHeader from '@atlaskit/page-header';
 import TableTree from '@atlaskit/table-tree';
-import NeoVis from 'neovis.js/dist/neovis.js';
+import * as vis from 'vis-network';
 
 const RelativePostition = styled.div`
   position: relative;
 `;
 
-const VizDiv = styled.div`
+const VisDiv = styled.div`
   width: ${props => props.theme.width}px;
   height: ${props => props.theme.height}px;
   border: 1px solid lightgray;
@@ -24,70 +24,136 @@ const VizDiv = styled.div`
 `;
 
 const VisualizeNodePage = () => {
-  let neoViz = null;
+  let network;
+  let nodes = [];
+  let edges = [];
+
   const [spaces, setSpaces] = useState([]);
   const [selectedSpace, setSelectedSpace] = useState([]);
   const [selectedNode, setSelectedNode] = useState({});
-  const vizRef = useRef();
+  const visRef = useRef();
   const [resizeListener, sizes] = useResizeAware();
 
   const fetchSpaces = async () => {
     const response = await invoke('getSpaces');
-    const spaces = response.results; //.filter(o => o.type !== 'personal');
+    const spaces = response.results.filter(o => o.type !== 'personal');
     setSpaces(spaces);
   };
 
-  const initNeovis = async () => {
-    const neovisConfig = {
-      containerId: 'viz',
-      neo4j: await invoke('neo4jConnection'),
-      visConfig: {
-        nodes: { shape: 'square' },
-        edges: { arrows: { to: { enabled: true } } },
+  const fetchGraph = async () => {
+    let cypher = '';
+    if (selectedSpace.length) {
+      cypher = `MATCH p = (page:PAGE)-[:LINKS]->(linkTo)
+        WHERE page.space IN ${JSON.stringify(selectedSpace.map(o => o.value))}
+        AND page.instance="::instance::"
+        RETURN p;`;
+    } else {
+      cypher = `MATCH p = (page:PAGE)-[:LINKS]->(linkTo)
+        WHERE page.instance="::instance::"
+        RETURN p;`;
+    }
+    const response = await invoke('queryCypher', cypher);
+    return response;
+  };
+
+  const updateNodeAndEdge = (record) => {
+    record.map(updateVisData);
+
+    // unique for non repeating
+    nodes = [...new Map(nodes.map((item) => [item['id'], item])).values()];
+    edges = [...new Map(edges.map((item) => [item['id'], item])).values()];
+  };
+
+  const updateVisData = (p) => {    
+    const { _fields: [v] } = p;
+  
+    const buildNodeVisObject = (node) => {
+      let label, group;
+      switch(node.labels[0]) {
+        case 'PAGE':
+          label = node.properties.title;
+          group = node.properties.space;
+          break;
+        case 'EXT_URL':
+          label = node.properties.hostname;
+          group = node.labels[0];
+          break;
+        case 'JIRA':
+          label = node.properties.issueKey;
+          group = node.labels[0];
+          break;
+      }
+
+      return {
+        id: parseInt(node.elementId),
+        label, group,
+        raw: node,
+      };
+    };
+  
+    const buildEdgeVisObject = (edge) => ({
+      id: parseInt(edge.elementId),
+      from: parseInt(edge.startNodeElementId),
+      to: parseInt(edge.endNodeElementId),
+      raw: edge,
+    });
+  
+    nodes.push(buildNodeVisObject(v.start));
+    nodes.push(buildNodeVisObject(v.end));
+  
+    for (const obj of v.segments) {
+      nodes.push(buildNodeVisObject(obj.start));
+      nodes.push(buildNodeVisObject(obj.end));
+      edges.push(buildEdgeVisObject(obj.relationship));
+    }
+  };
+
+  const initVis = async () => {
+    const record = await fetchGraph();
+    updateNodeAndEdge(record);
+  
+    // create a network
+    const container = document.getElementById('vis');
+    const data = {
+      nodes: nodes,
+      edges: edges,
+    };
+    const options = {
+      nodes: {
+        shape: 'dot',
+        size: 24,
+        borderWidth: 2,
       },
-      labels: {
-        PAGE: { label: 'title', group: 'space' },
-        EXTERNAL_URL: { label: 'hostname' },
-        JIRA: { label: 'issueKey', group: 'project' },
+      edges: {
+        width: 1,
       },
-      initialCypher: `
-        MATCH p = (page:PAGE)-[:LINKS]->(linkTo)
-        RETURN p
-      `,
     };
 
-    try {
-      neoViz = new NeoVis(neovisConfig);
-      neoViz.render();
-      neoViz.registerOnEvent('clickNode', (e) => {
-        console.log('clicked', e, e.node.raw.properties);
-        setSelectedNode({ ...e.node.raw.properties });
-      });
-    } catch (error) {
-      console.log(error);
-    }
+    network = new vis.Network(container, data, options);
+    network.on('selectNode', (e) => {
+      const clickedNode = nodes.find(o => o.id === e.nodes[0]);
+      // console.log('selectNode', clickedNode);
+      const displayNode = { ...clickedNode.raw.properties };
+      delete displayNode.instance;
+      setSelectedNode(displayNode);
+    });
   };
 
   useEffect(() => {
     fetchSpaces();
-    initNeovis();
+    initVis();
   }, []);
 
   useEffect(() => {
-    if (selectedSpace.length === 0)
-      return;
-
-    const _spaces = selectedSpace.map(o => o.value);
-    const cypher = `
-      MATCH p = (page:PAGE)-[:LINKS]->(linkTo)
-      WHERE page.space IN ${JSON.stringify(_spaces)}
-      RETURN p
-    `;
-    console.log(cypher);
-    neoViz.renderWithCypher(cypher.trim());
+    (async () => {
+      const record = await fetchGraph();
+      updateNodeAndEdge(record);
+      network.setData({ nodes, edges });
+      network.redraw();
+    })();
   }, [selectedSpace]);
 
-  const vizSize = { width: sizes.width - 50, height: 350 };
+  const visSize = { width: sizes.width - 50, height: 350 };
 
   return (
     <PageLayout>
@@ -111,7 +177,7 @@ const VisualizeNodePage = () => {
           <p></p>
           <RelativePostition>
             {resizeListener}
-            <VizDiv id="viz" ref={vizRef} theme={vizSize} />
+            <VisDiv id="vis" ref={visRef} theme={visSize} />
           </RelativePostition>
           <p></p>
           <TableTree

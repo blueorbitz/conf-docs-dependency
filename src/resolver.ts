@@ -1,4 +1,7 @@
 import api, { route, fetch } from '@forge/api';
+const VERCEL_NEO4J_SERVERLESS_URL = 'https://serverless-neo4j-api.vercel.app';
+
+const getSubdomain = (siteUrl: string) => siteUrl.match(/https:\/\/(\S+).atlassian.net/)[1];
 
 export const getText = async (req: any) => {
   console.log(req);
@@ -52,45 +55,41 @@ export const getPageId = async (req: any) => {
 
 export const contentProperty = async (req: any) => {
   const { method, id, PropertyKey, body } = JSON.parse(req.payload);
-  
+
   const response = await api.asApp().requestConfluence(route`/wiki/rest/api/content/${id}/property/${PropertyKey}`, {
     method, body, headers: { 'Accept': 'application/json' },
   });
-  
+
   console.log(`contentProperty[${method}]: ${response.status} ${response.statusText}`);
   if (response.status !== 200)
     return { status: response.status, statusText: response.statusText };
-  
+
   return await response.json();
 }
 
-export const spaceProperty = async (req: any) => { 
+export const spaceProperty = async (req: any) => {
   const { method, spaceKey, PropertyKey, body } = JSON.parse(req.payload);
-  
+
   const response = await api.asApp().requestConfluence(route`/wiki/rest/api/space/${spaceKey}/property/${PropertyKey}`, {
     method, body, headers: { 'Accept': 'application/json' },
   });
-  
+
   console.log(`spaceProperty[${method}]: ${response.status} ${response.statusText}`);
   if (response.status !== 200)
     return { status: response.status, statusText: response.statusText };
-  
+
   return await response.json();
 }
 
 export const postMergeGraph = async (req: any) => {
-  const VERCEL_NEO4J_SERVERLESS_URL = 'https://serverless-neo4j-api.vercel.app';
   try {
     const { siteUrl } = req.context;
-    
-    const getSubdomain = (siteUrl: string) => siteUrl.match(/https:\/\/(\S+).atlassian.net/)[1];
-    const getNeo4jPrefix = (siteUrl: string) => getSubdomain(siteUrl).replace('-', '_');
+
     const idConf = (id: string) => 'page_' + id;
     const idUrl = (s: string) => 'url_' + s.replace(/[^a-zA-Z]/g, '');
     const idJira = (key: string) => 'jira_' + key.replace('-', '_');
 
     const subdomain = getSubdomain(siteUrl);
-    const prefix = getNeo4jPrefix(siteUrl);
 
     const query = JSON.parse(req.payload).map(node => {
       let txt = '';
@@ -113,7 +112,7 @@ export const postMergeGraph = async (req: any) => {
         case 'EXT_URL':
           const hostname = new URL(url).hostname;
           txt = `
-            MERGE (${idUrl(url)}:${label} { hostname: '${hostname}', url: '${url}', instance: '${prefix}' })
+            MERGE (${idUrl(url)}:${label} { hostname: '${hostname}', url: '${url}', instance: '${subdomain}' })
             MERGE (${idConf(relation)})-[:LINKS]->(${idUrl(url)})
           `;
           break;
@@ -123,15 +122,12 @@ export const postMergeGraph = async (req: any) => {
       return txt;
     }).join('\n');
 
-    // let query = JSON.parse(req.payload).map(txt => `MERGE ${txt}`).join('\n');
-    // query = query.replace(/::prefix::/g, prefix);
-
     console.log('postMergeGraph', query);
 
     const response = await fetch(VERCEL_NEO4J_SERVERLESS_URL + `/api`, {
       method: 'post',
       body: query,
-      headers: {'Content-Type': 'text/plain'}
+      headers: { 'Content-Type': 'text/plain' }
     });
 
     console.log(`postMergeGraph: ${response.status} ${response.statusText}`);
@@ -144,10 +140,30 @@ export const postMergeGraph = async (req: any) => {
   }
 };
 
-export const neo4jConnection = async (req: any) => {
-  return {
-    serverUrl: (process.env.NEO4J_CONNECTION ?? '').replace('neo4j+s', 'neo4j'),
-    serverUser: 'neo4j',
-    serverPassword: process.env.NEO4J_PASSWORD,
-  };
-};
+export const queryCypher = async (req: any) => {
+  const { siteUrl } = req.context;
+  const subdomain = getSubdomain(siteUrl);
+  let cypher = req.payload;
+
+  try {
+    if (cypher.search('::instance::') === -1)
+      return { message: 'invalid input' }; // incase people try to inject unnecessary code
+
+    cypher = cypher.replace('::instance::', subdomain);
+    console.log(cypher);
+
+    const response = await fetch(VERCEL_NEO4J_SERVERLESS_URL + `/api`, {
+      method: 'post',
+      body: cypher,
+      headers: { 'Content-Type': 'text/plain' }
+    });
+
+    console.log(`queryCypher: ${response.status} ${response.statusText}`);
+    if (response.status !== 200)
+      throw new Error(await response.json());
+
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+  }
+}

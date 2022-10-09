@@ -17,11 +17,12 @@
     "@atlaskit/table-tree": "^9.2.1",
     "@atlaskit/tabs": "^13.3.0",
     "@forge/bridge": "^2.4.0",
-    "neovis.js": "^2.0.2",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-resize-aware": "^3.1.1",
-    "styled-components": "^3.4.10"
+    "styled-components": "^3.4.10",
+    "vis-data": "^7.1.4",
+    "vis-network": "^9.1.2"
   },
   "devDependencies": {
     "@types/react": "^18.0.21",
