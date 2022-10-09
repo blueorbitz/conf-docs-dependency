@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { AppContext } from './context';
 import { invoke } from './utils';
-import ConfigurationPage from './components/ConfigurationPage';
 import { FlagsProvider } from '@atlaskit/flag';
 import Blanket from '@atlaskit/blanket';
 import Spinner from '@atlaskit/spinner';
+import ConfigurationPage from './components/ConfigurationPage';
+import VisualizeNodePage from './components/VisualizeNodePage';
 
 const SpinnerDiv = styled.div`
   position: fixed;
@@ -45,8 +46,10 @@ const App = () => {
   const renderContext = () => {
     if (context) {
       switch (context.moduleKey) {
-        case 'hello-world-space':
+        case 'setup-space':
           return <ConfigurationPage />;
+        case 'visual-space':
+          return <VisualizeNodePage />;
         default:
           return <>Some error had been occured. {context.moduleKey}</>;
       }

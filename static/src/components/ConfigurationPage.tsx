@@ -90,27 +90,20 @@ const updateConfluenceProperty = async (page: any) => {
 const storeLinksGraph = async (linkData: any) => {
   const { space, page, links, confDocs, jira } = linkData;
 
-  const prefix = '::prefix::';
-  const idConf = (id: string) => prefix + '_page_' + id;
-  const idUrl = (s: string) => prefix + '_url_' + s.replace(/[^a-zA-Z]/g, '');
-  const idJira = (key: string) => prefix + '_jira_' + key.replace('-', '_');
-
   const queries = [];
-  queries.push(`(${idConf(page.id)}:PAGE { title: '${page.title}', space: '${space.key}', id: '${page.id}' })`);
+  queries.push({ label: 'PAGE', id: page.id, title: page.title, space: space.key });
 
   links.forEach(link => {
-    queries.push(`(${idUrl(link)}:EXTERNAL_URL { url: '${link}' })`);
-    queries.push(`(${idConf(page.id)})-[:LINKS]->(${idUrl(link)})`);
+    const hostname = new URL(link).hostname;
+    queries.push({ relation: page.id, label: 'EXT_URL', url: link });
   });
 
   confDocs.forEach(confDoc => {
-    queries.push(`(${idConf(confDoc.id)}:PAGE { title: '${confDoc.title}', space: '${confDoc.spaceKey}', id: '${confDoc.id}' })`);
-    queries.push(`(${idConf(page.id)})-[:LINKS]->(${idConf(confDoc.id)})`);
+    queries.push({ relation: page.id, label: 'PAGE', id: confDoc.id, title: confDoc.title, space: confDoc.spaceKey });
   });
 
   jira.forEach(key => {
-    queries.push(`(${idJira(key)}:JIRA { issueKey: '${key}' })`);
-    queries.push(`(${idConf(page.id)})-[:LINKS]->(${idJira(key)})`);
+    queries.push({ relation: page.id, label: 'JIRA', issueKey: key });
   });
 
   await invoke('postMergeGraph', JSON.stringify(queries));

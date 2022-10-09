@@ -1,7 +1,5 @@
 import api, { route, fetch } from '@forge/api';
 
-const getNeo4jPrefix = (siteUrl: string) => siteUrl.match(/https:\/\/(\S+).atlassian.net/)[1].replace('-', '_');
-
 export const getText = async (req: any) => {
   console.log(req);
   return 'Hello, world!';
@@ -84,10 +82,49 @@ export const postMergeGraph = async (req: any) => {
   const VERCEL_NEO4J_SERVERLESS_URL = 'https://serverless-neo4j-api.vercel.app';
   try {
     const { siteUrl } = req.context;
+    
+    const getSubdomain = (siteUrl: string) => siteUrl.match(/https:\/\/(\S+).atlassian.net/)[1];
+    const getNeo4jPrefix = (siteUrl: string) => getSubdomain(siteUrl).replace('-', '_');
+    const idConf = (id: string) => 'page_' + id;
+    const idUrl = (s: string) => 'url_' + s.replace(/[^a-zA-Z]/g, '');
+    const idJira = (key: string) => 'jira_' + key.replace('-', '_');
+
+    const subdomain = getSubdomain(siteUrl);
     const prefix = getNeo4jPrefix(siteUrl);
 
-    let query = JSON.parse(req.payload).map(txt => `MERGE ${txt}`).join('\n');
-    query = query.replace(/::prefix::/g, prefix);
+    const query = JSON.parse(req.payload).map(node => {
+      let txt = '';
+      const { relation, label, id, title, space, url, issueKey } = node;
+      switch (label) {
+        case 'PAGE':
+          txt = `MERGE (${idConf(id)}:${label} { id: '${id}', instance: '${subdomain}' })
+          SET ${idConf(id)}.title = '${title}'
+          SET ${idConf(id)}.space = '${space}'
+          `;
+          if (relation)
+            txt += `MERGE (${idConf(relation)})-[:LINKS]->(${idConf(id)})`;
+          break;
+        case 'JIRA':
+          txt = `
+            MERGE (${idJira(issueKey)}:${label} { issueKey: '${issueKey}', project: '${issueKey.split('-')[0]}', instance: '${subdomain}' })
+            MERGE (${idConf(relation)})-[:LINKS]->(${idJira(issueKey)})
+          `;
+          break;
+        case 'EXT_URL':
+          const hostname = new URL(url).hostname;
+          txt = `
+            MERGE (${idUrl(url)}:${label} { hostname: '${hostname}', url: '${url}', instance: '${prefix}' })
+            MERGE (${idConf(relation)})-[:LINKS]->(${idUrl(url)})
+          `;
+          break;
+        default:
+          console.log('Invalid label', node);
+      };
+      return txt;
+    }).join('\n');
+
+    // let query = JSON.parse(req.payload).map(txt => `MERGE ${txt}`).join('\n');
+    // query = query.replace(/::prefix::/g, prefix);
 
     console.log('postMergeGraph', query);
 
@@ -105,4 +142,12 @@ export const postMergeGraph = async (req: any) => {
   } catch (error) {
     console.error(error);
   }
+};
+
+export const neo4jConnection = async (req: any) => {
+  return {
+    serverUrl: (process.env.NEO4J_CONNECTION ?? '').replace('neo4j+s', 'neo4j'),
+    serverUser: 'neo4j',
+    serverPassword: process.env.NEO4J_PASSWORD,
+  };
 };

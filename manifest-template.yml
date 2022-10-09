@@ -1,11 +1,17 @@
 modules:
   confluence:spacePage:
-    - key: hello-world-space
+    - key: setup-space
       resource: main
       resolver:
         function: resolver
-      title: Template
-      route: hello-world
+      title: Configure Seeds
+      route: setup
+    - key: visual-space
+      resource: main
+      resolver:
+        function: resolver
+      title: Visualize Links
+      route: visual
   webtrigger:
     - key: mock-invoke
       function: invoker
@@ -39,6 +45,7 @@ permissions:
         - 'serverless-neo4j-api.vercel.app'
       client:
         - '*.hello.atlassian-dev.net'
+        - '*.databases.neo4j.io'
 app:
   id: ari:cloud:ecosystem::app/{{FORGE_APP_ID}}
   runtime:
