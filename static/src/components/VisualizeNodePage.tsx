@@ -24,10 +24,11 @@ const VisDiv = styled.div`
 `;
 
 const VisualizeNodePage = () => {
-  let network;
+  // let network = null;
   let nodes = [];
   let edges = [];
 
+  const [network, setNetwork] = useState(null);
   const [spaces, setSpaces] = useState([]);
   const [selectedSpace, setSelectedSpace] = useState([]);
   const [selectedNode, setSelectedNode] = useState({});
@@ -129,19 +130,20 @@ const VisualizeNodePage = () => {
       },
     };
 
-    network = new vis.Network(container, data, options);
-    network.on('selectNode', (e) => {
+    const _network = new vis.Network(container, data, options);
+    _network.on('selectNode', (e) => {
       const clickedNode = nodes.find(o => o.id === e.nodes[0]);
       // console.log('selectNode', clickedNode);
       const displayNode = { ...clickedNode.raw.properties };
       delete displayNode.instance;
       setSelectedNode(displayNode);
     });
+    setNetwork(_network);
   };
 
   useEffect(() => {
-    fetchSpaces();
     initVis();
+    fetchSpaces();
   }, []);
 
   useEffect(() => {
