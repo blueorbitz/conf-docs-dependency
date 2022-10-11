@@ -12,6 +12,13 @@ modules:
         function: resolver
       title: Visualize Links
       route: visual
+  confluence:contentBylineItem:
+    - key: quick-glance
+      resource: main
+      resolver:
+        function: resolver
+      title: Glance dependency
+      tooltip: Quick glance to see other page that has mention this page.
   webtrigger:
     - key: mock-invoke
       function: invoker

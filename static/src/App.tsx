@@ -7,6 +7,7 @@ import Blanket from '@atlaskit/blanket';
 import Spinner from '@atlaskit/spinner';
 import ConfigurationPage from './components/ConfigurationPage';
 import VisualizeNodePage from './components/VisualizeNodePage';
+import QuickGlancePage from './components/QuickGlancePage';
 
 const SpinnerDiv = styled.div`
   position: fixed;
@@ -28,6 +29,7 @@ const App = () => {
         spinner: false,
         accountId: result.accountId,
         cloudId: result.cloudId,
+        siteUrl: result.siteUrl,
       });
     } catch (e) {
       setContext({
@@ -35,6 +37,7 @@ const App = () => {
         spinner: false,
         accountId: null,
         cloudId: null,
+        siteUrl: null,
       });
       console.error('Error: ', e.message);
     }
@@ -50,6 +53,8 @@ const App = () => {
           return <ConfigurationPage />;
         case 'visual-space':
           return <VisualizeNodePage />;
+        case 'quick-glance':
+          return <QuickGlancePage context={context} />;
         default:
           return <>Some error had been occured. {context.moduleKey}</>;
       }

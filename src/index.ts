@@ -18,8 +18,8 @@ export const invoker = async (req) => {
   const _name = name[0];
   const _payload = payload[0];
 
-  const ModuleList = ['setup-space', 'visual-space'];
-  const MOCK_MODULE = ModuleList[1];
+  const ModuleList = ['setup-space', 'visual-space', 'quick-glance'];
+  const MOCK_MODULE = ModuleList[2];
   const result = await ResolveFunc[_name]({
     payload: _payload,
     context: {
