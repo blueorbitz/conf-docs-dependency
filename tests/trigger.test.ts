@@ -38,5 +38,5 @@ const MOCK_EVENT = {
 describe.only('Trigger test', () => {
   it('onchange logic', async () => {
     await onchange(MOCK_EVENT, {});
-  }).timeout(5000);
+  }).timeout(10000);
 });

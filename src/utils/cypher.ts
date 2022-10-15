@@ -45,3 +45,11 @@ export const deleteElementByIds = (elementIds: number[]) => {
   `;
 };
 
+export const deleteRelationByIds = (id, elementIds: number[]) => {
+  return `
+    MATCH (${idConf(id)}:PAGE { id: '${id}', instance: '::instance::' })-[r:LINKS]->(p:PAGE)
+    WHERE ID(p) IN ${JSON.stringify(elementIds)}
+    DELETE r
+  `;
+};
+
