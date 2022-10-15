@@ -6,8 +6,8 @@
   "private": true,
   "scripts": {
     "setup": "node setup",
-    "test": "mocha -r ts-node/register 'tests/**/*.ts'",
-    "test:watch": "mocha -r ts-node/register --watch --watch-files src/**/*.ts,tests/*.ts tests/**/*.ts"
+    "test": "cross-env NODE_ENV=test mocha -r ts-node/register 'tests/**/*.ts'",
+    "test:watch": "cross-env NODE_ENV=test mocha -r ts-node/register --watch --watch-files src/**/*.ts,tests/*.ts tests/**/*.ts"
   },
   "devDependencies": {
     "@types/chai": "^4.3.3",
@@ -15,6 +15,7 @@
     "@types/node": "^18.7.23",
     "@types/react": "^18.0.21",
     "chai": "^4.3.6",
+    "cross-env": "^7.0.3",
     "eslint": "^7.32.0",
     "eslint-plugin-react-hooks": "^4.2.0",
     "handlebars": "^4.7.7",

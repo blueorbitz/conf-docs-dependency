@@ -22,11 +22,19 @@ modules:
   webtrigger:
     - key: mock-invoke
       function: invoker
+  trigger:
+    - key: change-trigger
+      events:
+        - avi:confluence:created:page
+        - avi:confluence:updated:page
+      function: onchange
   function:
     - key: resolver
       handler: index.handler
     - key: invoker
       handler: index.invoker
+    - key: onchange
+      handler: index.onchange
 resources:
   - key: main
     path: static/build

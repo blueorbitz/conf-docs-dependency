@@ -1,5 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { invoke, delay } from '../utils';
+import { invoke, delay, log } from '../utils';
+import {
+  PropertyKey, PropertyValue,
+  extractKeyProperty,
+  extractAndStoreLinks,
+} from '../utils/logic';
 import {
   Content,
   Main,
@@ -19,101 +24,13 @@ import Modal, {
   ModalTransition,
 } from '@atlaskit/modal-dialog';
 
-const PropertyKey = 'conf_link_graph';
-const PropertyValue = JSON.stringify({ value: 'loaded' });
-
-const extractAndStoreLinks = async (page: any) => {
-  const linksData = await extractPageLinks(page);
-  await updateConfluenceProperty(page);
-  await storeLinksGraph(linksData);
-};
-
-const extractPageLinks = async (page: any) => {
-  const response = await invoke('getContent', page.id);
-  const { body: { storage: { value: body } }, space } = response;
-  console.log('\n#########Body ', page.id, page.title);
-
-  const links = [...body.matchAll(/href="(\S{7,})"/g)]
-    .map(o => o[1])
-    .filter((value, index, self) => self.indexOf(value) === index); // unique
-  console.log('links', links);
-
-  // extract pages
-  const confDocs = [];
-  for (let cur = 0; cur !== -1;) {
-    cur = body.indexOf('<ri:page', cur);
-    if (cur === -1) continue;
-
-    const end = body.indexOf('/>', cur);
-    const tag = body.slice(cur, end + 2);
-    cur = end;
-
-    const curTitleStart = tag.indexOf('ri:content-title=', 0);
-    const curTitleEnd = tag.indexOf('"', curTitleStart + 18);
-    const title = tag.slice(curTitleStart + 18, curTitleEnd);
-
-    const curSpaceStart = tag.indexOf('ri:space-key=', 0);
-    const curSpaceEnd = tag.indexOf('"', curSpaceStart + 14);
-    let spaceKey = space.key;
-    if (curSpaceEnd !== -1 && curSpaceStart !== -1)
-      spaceKey = tag.slice(curSpaceStart + 14, curSpaceEnd);
-
-    const cqlResponse = await invoke('getPageId', { spaceKey, title });
-
-    let id = '0';
-    const { results } = cqlResponse;
-    if (results.length) id = results[0].id;
-
-    if (confDocs.findIndex(x => x.id === id) === -1)
-      confDocs.push({ id, title, spaceKey: spaceKey });
-  }
-  console.log('confDocs', confDocs);
-
-  const jira = [...body.matchAll(/<ac:parameter ac:name="key">(\S+)<\/ac:parameter>/g)]
-    .map(o => o[1])
-    .filter((value, index, self) => self.indexOf(value) === index); // unique
-  console.log('jira', jira);
-
-  return { space, page, links, confDocs, jira };
-};
-
-const updateConfluenceProperty = async (page: any) => {
-  const id = page.id;
-  const { metadata: { properties: { _expandable: { [PropertyKey]: propertyDefined } } } } = page;
-
-  if (propertyDefined != null)
-    await invoke('contentProperty', { method: 'DELETE', id: page.id, PropertyKey }); // has to delete to be able to update the version
-
-  await invoke('contentProperty', { method: 'POST', id: page.id, PropertyKey, body: PropertyValue });
-};
-
-const storeLinksGraph = async (linkData: any) => {
-  const { space, page, links, confDocs, jira } = linkData;
-
-  const queries = [];
-  queries.push({ label: 'PAGE', id: page.id, title: page.title, space: space.key });
-
-  links.forEach(link => {
-    const hostname = new URL(link).hostname;
-    queries.push({ relation: page.id, label: 'EXT_URL', url: link });
-  });
-
-  confDocs.forEach(confDoc => {
-    queries.push({ relation: page.id, label: 'PAGE', id: confDoc.id, title: confDoc.title, space: confDoc.spaceKey });
-  });
-
-  jira.forEach(key => {
-    queries.push({ relation: page.id, label: 'JIRA', issueKey: key });
-  });
-
-  await invoke('postMergeGraph', JSON.stringify(queries));
-};
 
 const ConfigurationPage = () => {
   const [spaces, setSpaces] = useState();
   const [seedCount, setSeedCount] = useState(-1); // 0 - 1
   const [seedMessage, setSeedMessage] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const [isOpen, setIsOpen] = useState(false);
   const openModal = useCallback(() => setIsOpen(true), []);
@@ -139,6 +56,7 @@ const ConfigurationPage = () => {
     if (seedCount !== -1)
       return; // Don't let the seeding to continue run
 
+    setErrorMessage(null);
     setSeedCount(0);
     let i = 0;
 
@@ -152,7 +70,7 @@ const ConfigurationPage = () => {
         for (const page of pages) {
           setSeedMessage(`Space("${space.key}") - processing ${++j} of ${pages.length} pages...`);
 
-          const { status, metadata: { properties: { _expandable: { [PropertyKey]: propertyDefined } } } } = page;
+          const { status, propertyDefined } = extractKeyProperty(page);
           if (propertyDefined != null || status !== 'current')
             continue;
           await extractAndStoreLinks(page);
@@ -168,6 +86,7 @@ const ConfigurationPage = () => {
       }
     } catch (error) {
       console.log(error);
+      setErrorMessage(error.message);
     } finally {
       await delay(1000);
       setSeedCount(1);
@@ -190,8 +109,8 @@ const ConfigurationPage = () => {
         const { page: { results: pages = [] } } = contents;
 
         for (const page of pages) {
-          const { metadata: { properties: { _expandable: { [PropertyKey]: propertyDefined } } } } = page;
-          console.log('delete meta:', page.id, page.title, page.metadata.properties._expandable);
+          const { propertyDefined } = extractKeyProperty(page);
+          log('delete meta:', page.id, page.title);
           if (propertyDefined != null)
             await invoke('contentProperty', { method: 'DELETE', id: page.id, PropertyKey });
         }
@@ -205,6 +124,23 @@ const ConfigurationPage = () => {
     }
   };
 
+  const onClickResetGraph = async () => {
+    if (resetLoading)
+      return;
+
+    setResetLoading(true);
+    
+    try {
+      const cypher = 'MATCH (n {instance: "::instance::"}) DETACH DELETE n;';
+      console.log(await invoke('queryCypher', cypher));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      await delay(500);
+      setResetLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchSpaces();
   }, []);
@@ -212,6 +148,13 @@ const ConfigurationPage = () => {
   // Header component
   const actionsContent = (
     <ButtonGroup>
+      <Button onClick={onClickResetGraph} isDisabled={resetLoading}>
+        {
+          resetLoading
+            ? <React.Fragment>Resetting <Spinner size="small" /></React.Fragment>
+            : 'Reset Graph'
+        }
+      </Button>
       <Button onClick={onClickResetProperty} isDisabled={resetLoading}>
         {
           resetLoading
@@ -249,7 +192,7 @@ const ConfigurationPage = () => {
       <Content testId="content">
         <Main testId="main" id="main" skipLinkTitle="Main Content">
           <PageHeader actions={actionsContent} >
-            Conf Docs Dependency | Admin
+            Conf Docs Dependency | Setup
           </PageHeader>
           {
             spaces == null
@@ -276,7 +219,7 @@ const ConfigurationPage = () => {
                   ariaLabel={`Done: ${seedCount * 100} completed`}
                   value={seedCount}
                 />
-                <span>{seedMessage}</span>
+                <span>{errorMessage || seedMessage}</span>
                 <p>We require you to leave this page alone as we working on linking the page together.</p>
               </ModalBody>
               <ModalFooter>

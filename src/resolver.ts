@@ -1,10 +1,9 @@
-import api, { route, fetch } from '@forge/api';
-const VERCEL_NEO4J_SERVERLESS_URL = 'https://serverless-neo4j-api.vercel.app';
+import { log, requestConfluence, fetch } from './utils';
 
 const getSubdomain = (siteUrl: string) => siteUrl.match(/https:\/\/(\S+).atlassian.net/)[1];
 
 export const getText = async (req: any) => {
-  console.log(req);
+  log(req);
   return 'Hello, world!';
 };
 
@@ -13,54 +12,45 @@ export const getContext = async (req: any) => {
 };
 
 export const getSpaces = async (req: any) => {
-  console.log(route`/wiki/rest/api/space?expand=metadata.properties&limit=99`);
-  const response = await api.asApp().requestConfluence(route`/wiki/rest/api/space?expand=metadata.properties&limit=99`, {
-    headers: { 'Accept': 'application/json' },
-  });
+  const response = await requestConfluence('/wiki/rest/api/space?expand=metadata.properties&limit=99');
 
-  console.log(`getSpaces: ${response.status} ${response.statusText}`);
+  log(`getSpaces: ${response.status} ${response.statusText}`);
   return await response.json();
 };
 
 export const getContents = async (req: any) => {
   const spaceKey = req.payload;
-  const response = await api.asApp().requestConfluence(route`/wiki/rest/api/space/${spaceKey}/content?expand=metadata.properties&limit=99`, {
-    headers: { 'Accept': 'application/json' },
-  });
+  const response = await requestConfluence(`/wiki/rest/api/space/${spaceKey}/content?expand=metadata.properties&limit=99`);
 
-  console.log(`getContents: ${response.status} ${response.statusText}`);
+  log(`getContents: ${response.status} ${response.statusText}`);
   return await response.json();
 }
 
 export const getContent = async (req: any) => {
   const pageId = req.payload;
-  const response = await api.asApp().requestConfluence(route`/wiki/rest/api/content/${pageId}?expand=body.storage,space`, {
-    headers: { 'Accept': 'application/json' },
-  });
+  const response = await requestConfluence(`/wiki/rest/api/content/${pageId}?expand=body.storage,space`);
 
-  console.log(`getContents: ${response.status} ${response.statusText}`);
+  log(`getContents: ${response.status} ${response.statusText}`);
   return await response.json();
 };
 
 export const getPageId = async (req: any) => {
   const { spaceKey, title } = JSON.parse(req.payload);
-  console.log('getPageId', spaceKey, title);
-  const response = await api.asApp().requestConfluence(route`/wiki/rest/api/content/search?cql=type=page AND space="${spaceKey}" AND title="${title}"&limit=1`, {
-    headers: { 'Accept': 'application/json' },
-  });
+  log('getPageId', spaceKey, title);
+  const response = await requestConfluence(`/wiki/rest/api/content/search?cql=type=page AND space="${spaceKey}" AND title="${title}"&limit=1`);
 
-  console.log(`getPageId: ${response.status} ${response.statusText}`);
+  log(`getPageId: ${response.status} ${response.statusText}`);
   return await response.json();
 };
 
 export const contentProperty = async (req: any) => {
   const { method, id, PropertyKey, body } = JSON.parse(req.payload);
 
-  const response = await api.asApp().requestConfluence(route`/wiki/rest/api/content/${id}/property/${PropertyKey}`, {
-    method, body, headers: { 'Accept': 'application/json' },
+  const response = await requestConfluence(`/wiki/rest/api/content/${id}/property/${PropertyKey}`, {
+    method, body,
   });
 
-  console.log(`contentProperty[${method}]: ${response.status} ${response.statusText}`);
+  log(`contentProperty[${method}]: ${response.status} ${response.statusText}`);
   if (response.status !== 200)
     return { status: response.status, statusText: response.statusText };
 
@@ -70,11 +60,11 @@ export const contentProperty = async (req: any) => {
 export const spaceProperty = async (req: any) => {
   const { method, spaceKey, PropertyKey, body } = JSON.parse(req.payload);
 
-  const response = await api.asApp().requestConfluence(route`/wiki/rest/api/space/${spaceKey}/property/${PropertyKey}`, {
-    method, body, headers: { 'Accept': 'application/json' },
+  const response = await requestConfluence(`/wiki/rest/api/space/${spaceKey}/property/${PropertyKey}`, {
+    method, body,
   });
 
-  console.log(`spaceProperty[${method}]: ${response.status} ${response.statusText}`);
+  log(`spaceProperty[${method}]: ${response.status} ${response.statusText}`);
   if (response.status !== 200)
     return { status: response.status, statusText: response.statusText };
 
@@ -117,20 +107,21 @@ export const postMergeGraph = async (req: any) => {
           `;
           break;
         default:
-          console.log('Invalid label', node);
+          log('Invalid label', node);
       };
       return txt;
     }).join('\n');
 
-    console.log('postMergeGraph', query);
+    log('postMergeGraph', query);
 
+    const { VERCEL_NEO4J_SERVERLESS_URL } = process.env;
     const response = await fetch(VERCEL_NEO4J_SERVERLESS_URL + `/api`, {
       method: 'post',
       body: query,
       headers: { 'Content-Type': 'text/plain' }
     });
 
-    console.log(`postMergeGraph: ${response.status} ${response.statusText}`);
+    log(`postMergeGraph: ${response.status} ${response.statusText}`);
     if (response.status !== 200)
       throw new Error(await response.json());
 
@@ -150,15 +141,16 @@ export const queryCypher = async (req: any) => {
       return { message: 'invalid input' }; // incase people try to inject unnecessary code
 
     cypher = cypher.replace('::instance::', subdomain);
-    console.log(cypher);
+    log(cypher);
 
+    const { VERCEL_NEO4J_SERVERLESS_URL } = process.env;
     const response = await fetch(VERCEL_NEO4J_SERVERLESS_URL + `/api`, {
       method: 'post',
       body: cypher,
       headers: { 'Content-Type': 'text/plain' }
     });
 
-    console.log(`queryCypher: ${response.status} ${response.statusText}`);
+    log(`queryCypher: ${response.status} ${response.statusText}`);
     if (response.status !== 200)
       throw new Error(await response.json());
 
@@ -166,4 +158,52 @@ export const queryCypher = async (req: any) => {
   } catch (error) {
     console.error(error);
   }
+}
+
+export const extractPageLinks = async (req: any) => {
+  const body = req.payload;
+  log('extractPageLinks:', body.substring(0, 24) + '...');
+
+  const extractLink = (_body) => {
+    return [...body.matchAll(/href="(\S{7,})"/g)]
+      .map(o => o[1])
+      .filter((value, index, self) => self.indexOf(value) === index); // unique
+  };
+
+  const extractJira = (_body) => {
+    return [...body.matchAll(/<ac:parameter ac:name="key">(\S+)<\/ac:parameter>/g)]
+      .map(o => o[1])
+      .filter((value, index, self) => self.indexOf(value) === index); // unique
+  };
+
+  const extractConf = (_body) => {
+    const conf = [];
+    for (let cur = 0; cur !== -1;) {
+      cur = body.indexOf('<ri:page', cur);
+      if (cur === -1) continue;
+
+      const end = body.indexOf('/>', cur);
+      const tag = body.slice(cur, end + 2);
+      cur = end;
+
+      const curTitleStart = tag.indexOf('ri:content-title=', 0);
+      const curTitleEnd = tag.indexOf('"', curTitleStart + 18);
+      const title = tag.slice(curTitleStart + 18, curTitleEnd);
+
+      const curSpaceStart = tag.indexOf('ri:space-key=', 0);
+      const curSpaceEnd = tag.indexOf('"', curSpaceStart + 14);
+      let spaceKey = '';
+      if (curSpaceEnd !== -1 && curSpaceStart !== -1)
+        spaceKey = tag.slice(curSpaceStart + 14, curSpaceEnd);
+
+      conf.push({ spaceKey, title });
+    }
+    return conf;
+  };
+
+  return {
+    links: extractLink(body),
+    jira: extractJira(body),
+    conf: extractConf(body),
+  };
 }

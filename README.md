@@ -64,8 +64,7 @@ forge webtrigger
 
 - Setup NEO4J environment var
 ```
-forge variables set NEO4J_CONNECTION value
-forge variables set --encrypt NEO4J_PASSWORD value
+forge variables set VERCEL_NEO4J_SERVERLESS_URL value
 ```
 
 ### Notes

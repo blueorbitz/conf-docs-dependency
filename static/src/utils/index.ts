@@ -3,6 +3,9 @@ const {
   REACT_APP_MOCK_TRIGGER_URL,
 } = process.env;
 
+const noop = () => {};
+export const log = REACT_APP_FRONTEND_DEV_ONLY === 'true' ? console.log: noop;
+
 export const delay = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const invoke = async (name: string, payload?: any) => {
@@ -15,13 +18,15 @@ export const invoke = async (name: string, payload?: any) => {
     return ForgeBridge.invoke(name, _payload);
   }
   else {
-    const params = '?' + new URLSearchParams({
+    console.log('fetch', REACT_APP_MOCK_TRIGGER_URL, {
       name: name,
       payload: _payload,
     });
 
-    console.log('fetch', REACT_APP_MOCK_TRIGGER_URL + params);
-    const response = await fetch(REACT_APP_MOCK_TRIGGER_URL + params);
+    const response = await fetch(REACT_APP_MOCK_TRIGGER_URL, {
+      method: 'post',
+      body: JSON.stringify({ name, payload: _payload }),
+    });
     const json = await response.json();
     console.log(json);
     if (response.status !== 200)
