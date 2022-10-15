@@ -27,9 +27,7 @@ const App = () => {
       setContext({
         moduleKey: result.moduleKey as string,
         spinner: false,
-        accountId: result.accountId,
-        cloudId: result.cloudId,
-        siteUrl: result.siteUrl,
+        ...result,
       });
     } catch (e) {
       setContext({

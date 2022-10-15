@@ -8,9 +8,10 @@ const PNoMargin = styled.p`
 
 const QuickGlancePage = ({ context }) => {
   const [connectedPage, setConnectedPage] = useState([]);
+  const [isLoad, setIsLoad] = useState(false);
 
   const fetchGraph = async () => {
-    const cypher = `MATCH (p:PAGE { id: "65757" })<--(o:PAGE)
+    const cypher = `MATCH (p:PAGE { id: "${context.extension.content.id}" })<--(o:PAGE)
       WHERE p.instance = "::instance::"
       return o.id, o.space, o.title`;
     const response = await invoke('queryCypher', cypher);
@@ -20,6 +21,7 @@ const QuickGlancePage = ({ context }) => {
       return { pageId, space, title };
     }));
 
+    setIsLoad(true);
     return response;
   };
 
@@ -30,6 +32,11 @@ const QuickGlancePage = ({ context }) => {
   return <React.Fragment>
     <h3>Glance connection</h3>
     <PNoMargin>Confluence page that has linked to this page.</PNoMargin>
+    {
+      isLoad && connectedPage.length === 0
+        ? <p>No page is referencing to this.</p>
+        : null
+    }
     <ul>
       {connectedPage.map(o => {
         return <li>

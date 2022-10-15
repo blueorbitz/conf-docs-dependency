@@ -19,8 +19,26 @@ export const invoker = async (req) => {
   const _name = name;
   const _payload = payload;
 
+  const MOCK_INDEX = 2;
   const ModuleList = ['setup-space', 'visual-space', 'quick-glance'];
-  const MOCK_MODULE = ModuleList[0];
+  const ModuleExtension = [
+    {
+      type: 'confluence:spacePage'
+    },
+    {
+      type: 'confluence:spacePage'
+    },
+    {
+      type: 'confluence:confluence:contentBylineItem',
+      content: {
+        id: '557075',
+        type: 'page',
+      },
+      space: { key: 'STRAWHAT' },
+    },
+  ];
+  const MOCK_MODULE = ModuleList[MOCK_INDEX];
+  const MOCK_EXTENSION = ModuleExtension[MOCK_INDEX]
   const result = await ResolveFunc[_name]({
     payload: _payload,
     context: {
@@ -29,7 +47,7 @@ export const invoker = async (req) => {
       environmentType: 'DEVELOPMENT',
       moduleKey: MOCK_MODULE,
       siteUrl: 'https://subdomain.atlassian.net',
-      extension: { type: 'confluence:spacePage' },
+      extension: MOCK_EXTENSION,
       accountId: '70121:{{uuid}}'
     }
   });
