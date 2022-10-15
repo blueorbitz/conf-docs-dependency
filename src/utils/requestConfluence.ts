@@ -1,4 +1,5 @@
-const { NODE_ENV, FORGE_EMAIL, FORGE_API_TOKEN, ATL_INSTANCE_URL } = process.env;
+import { isForge } from ".";
+const { FORGE_EMAIL, FORGE_API_TOKEN, ATL_INSTANCE_URL } = process.env;
 
 const restRequestConfluence = async (path: string, options: any = {}) => {
   const fetch = require('node-fetch');
@@ -22,7 +23,7 @@ const forgeRequestConfluence = async (path: string, options: any = {}) => {
 };
 
 export default async (path: string, options: any = {}) => {
-  if (NODE_ENV !== 'test')
+  if (isForge())
     return await forgeRequestConfluence(path, options);
   else
     return await restRequestConfluence(path, options);

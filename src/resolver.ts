@@ -1,6 +1,4 @@
-import { log, requestConfluence, fetch } from './utils';
-
-const getSubdomain = (siteUrl: string) => siteUrl.match(/https:\/\/(\S+).atlassian.net/)[1];
+import { log, requestConfluence, fetch, cypher } from './utils';
 
 export const getText = async (req: any) => {
   log(req);
@@ -55,7 +53,7 @@ export const contentProperty = async (req: any) => {
     return { status: response.status, statusText: response.statusText };
 
   return await response.json();
-}
+};
 
 export const spaceProperty = async (req: any) => {
   const { method, spaceKey, PropertyKey, body } = JSON.parse(req.payload);
@@ -69,48 +67,28 @@ export const spaceProperty = async (req: any) => {
     return { status: response.status, statusText: response.statusText };
 
   return await response.json();
-}
+};
 
 export const postMergeGraph = async (req: any) => {
   try {
     const { siteUrl } = req.context;
 
-    const idConf = (id: string) => 'page_' + id;
-    const idUrl = (s: string) => 'url_' + s.replace(/[^a-zA-Z]/g, '');
-    const idJira = (key: string) => 'jira_' + key.replace('-', '_');
-
-    const subdomain = getSubdomain(siteUrl);
-
-    const query = JSON.parse(req.payload).map(node => {
-      let txt = '';
+    let query = JSON.parse(req.payload).map(node => {
       const { relation, label, id, title, space, url, issueKey } = node;
       switch (label) {
         case 'PAGE':
-          txt = `MERGE (${idConf(id)}:${label} { id: '${id}', instance: '${subdomain}' })
-          SET ${idConf(id)}.title = '${title}'
-          SET ${idConf(id)}.space = '${space}'
-          `;
-          if (relation)
-            txt += `MERGE (${idConf(relation)})-[:LINKS]->(${idConf(id)})`;
-          break;
+          return cypher.mergePage({ relation, id, title, space });
         case 'JIRA':
-          txt = `
-            MERGE (${idJira(issueKey)}:${label} { issueKey: '${issueKey}', project: '${issueKey.split('-')[0]}', instance: '${subdomain}' })
-            MERGE (${idConf(relation)})-[:LINKS]->(${idJira(issueKey)})
-          `;
-          break;
+          return cypher.mergeJira({ relation, issueKey });
         case 'EXT_URL':
-          const hostname = new URL(url).hostname;
-          txt = `
-            MERGE (${idUrl(url)}:${label} { hostname: '${hostname}', url: '${url}', instance: '${subdomain}' })
-            MERGE (${idConf(relation)})-[:LINKS]->(${idUrl(url)})
-          `;
-          break;
+          return cypher.mergeExtUrl({ relation, url });
         default:
           log('Invalid label', node);
       };
-      return txt;
     }).join('\n');
+
+    const subdomain = cypher.extractAtlSubdomain(siteUrl);
+    query = cypher.replaceInstance(subdomain, query);
 
     log('postMergeGraph', query);
 
@@ -133,20 +111,20 @@ export const postMergeGraph = async (req: any) => {
 
 export const queryCypher = async (req: any) => {
   const { siteUrl } = req.context;
-  const subdomain = getSubdomain(siteUrl);
-  let cypher = req.payload;
+  let body = req.payload;
 
   try {
-    if (cypher.search('::instance::') === -1)
+    if (body.search('::instance::') === -1)
       return { message: 'invalid input' }; // incase people try to inject unnecessary code
 
-    cypher = cypher.replace('::instance::', subdomain);
-    log(cypher);
+    const subdomain = cypher.extractAtlSubdomain(siteUrl);
+    body = cypher.replaceInstance(subdomain, body);
+    log(body);
 
     const { VERCEL_NEO4J_SERVERLESS_URL } = process.env;
     const response = await fetch(VERCEL_NEO4J_SERVERLESS_URL + `/api`, {
       method: 'post',
-      body: cypher,
+      body,
       headers: { 'Content-Type': 'text/plain' }
     });
 
@@ -158,11 +136,11 @@ export const queryCypher = async (req: any) => {
   } catch (error) {
     console.error(error);
   }
-}
+};
 
 export const extractPageLinks = async (req: any) => {
   const body = req.payload;
-  log('extractPageLinks:', body.substring(0, 24) + '...');
+  log('extractPageLinks:', body.slice(0, 24) + '...');
 
   const extractLink = (_body) => {
     return [...body.matchAll(/href="(\S{7,})"/g)]
@@ -206,4 +184,4 @@ export const extractPageLinks = async (req: any) => {
     jira: extractJira(body),
     conf: extractConf(body),
   };
-}
+};

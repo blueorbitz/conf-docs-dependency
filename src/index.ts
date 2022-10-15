@@ -49,7 +49,7 @@ export const invoker = async (req) => {
       siteUrl: 'https://subdomain.atlassian.net',
       extension: MOCK_EXTENSION,
       accountId: '70121:{{uuid}}'
-    }
+    },
   });
 
   return {

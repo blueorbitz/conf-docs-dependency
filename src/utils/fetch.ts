@@ -1,4 +1,4 @@
-const { NODE_ENV } = process.env;
+import { isForge } from ".";
 
 const restFetch = async (url: string, options: any = {}) => {
   const fetch = require('node-fetch');
@@ -11,7 +11,7 @@ const forgeFetch = async (url: string, options: any = {}) => {
 };
 
 export default async (url: string, options: any = {}) => {
-  if (NODE_ENV !== 'test')
+  if (isForge())
     return await forgeFetch(url, options);
   else
     return await restFetch(url, options);

@@ -6,7 +6,7 @@ const MOCK_EVENT = {
   suppressNotifications: false,
   content: {
     // Update sample
-    id: '557075',
+    id: '2424833',
     type: 'page',
     status: 'current',
     title: 'My nested nest page',
@@ -37,6 +37,6 @@ const MOCK_EVENT = {
 
 describe.only('Trigger test', () => {
   it('onchange logic', async () => {
-    onchange(MOCK_EVENT, {});
-  });
+    await onchange(MOCK_EVENT, {});
+  }).timeout(5000);
 });
