@@ -1,4 +1,4 @@
-const idConf = (id: string) => 'page_' + id;
+const idConf = (id: string | number) => 'page_' + id;
 const idUrl = (s: string) => 'url_' + s.replace(/[^a-zA-Z0-9]/g, '');
 const idJira = (key: string) => 'jira_' + key.replace('-', '_');
 
@@ -6,11 +6,18 @@ export const extractAtlSubdomain = (siteUrl: string) => siteUrl.match(/https:\/\
 
 export const replaceInstance = (subdomain: string, body: string) => body.replace(/::instance::/g, subdomain);
 
-export const matchRelation = (id) => {
+export const matchRelation = (id: string | number) => {
   return `MATCH (${idConf(id)}:PAGE { id: '${id}', instance: '::instance::' })`;
 };
 
-export const mergePage = ({ relation, id, title, space }) => {
+interface CypherPageInput {
+  relation?: string | number,
+  id: string | number,
+  title: string,
+  space: string,
+};
+
+export const mergePage = ({ relation, id, title, space }: CypherPageInput) => {
   let txt = '';
   txt = `MERGE (${idConf(id)}:PAGE { id: '${id}', instance: '::instance::' })
   SET ${idConf(id)}.title = '${title}'
@@ -23,14 +30,24 @@ export const mergePage = ({ relation, id, title, space }) => {
   return txt;
 };
 
-export const mergeJira = ({ relation, issueKey }) => {
+interface CypherJiraInput {
+  relation: string | number,
+  issueKey: string,
+};
+
+export const mergeJira = ({ relation, issueKey }: CypherJiraInput) => {
   return `
     MERGE (${idJira(issueKey)}:JIRA { issueKey: '${issueKey}', project: '${issueKey.split('-')[0]}', instance: '::instance::' })
     MERGE (${idConf(relation)})-[:LINKS]->(${idJira(issueKey)})
   `;
 };
 
-export const mergeExtUrl = ({ relation, url }) => {
+interface CypherExtUrlInput {
+  relation: string | number,
+  url: string,
+};
+
+export const mergeExtUrl = ({ relation, url }: CypherExtUrlInput) => {
   const hostname = new URL(url).hostname;
   return `
     MERGE (${idUrl(url)}:EXT_URL { hostname: '${hostname}', url: '${url}', instance: '::instance::' })

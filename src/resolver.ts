@@ -1,22 +1,37 @@
 import { log, requestConfluence, fetch, cypher } from './utils';
 
-export const getText = async (req: any) => {
+interface ContextInterface {
+  siteUrl: string;
+  cloudId?: string;
+  environmentId?: string;
+  environmentType?: string;
+  moduleKey?: string;
+  extension?: object;
+  accountId?: string;
+};
+
+export interface ResolverFunction {
+  context: ContextInterface;
+  payload: string;
+}
+
+export const getText = async (req: ResolverFunction) => {
   log(req);
   return 'Hello, world!';
 };
 
-export const getContext = async (req: any) => {
+export const getContext = async (req: ResolverFunction) => {
   return { ...req.context };
 };
 
-export const getSpaces = async (req: any) => {
+export const getSpaces = async () => {
   const response = await requestConfluence('/wiki/rest/api/space?expand=metadata.properties&limit=99');
 
   log(`getSpaces: ${response.status} ${response.statusText}`);
   return await response.json();
 };
 
-export const getContents = async (req: any) => {
+export const getContents = async (req: ResolverFunction) => {
   const spaceKey = req.payload;
   const response = await requestConfluence(`/wiki/rest/api/space/${spaceKey}/content?expand=metadata.properties&limit=99`);
 
@@ -24,7 +39,7 @@ export const getContents = async (req: any) => {
   return await response.json();
 }
 
-export const getContent = async (req: any) => {
+export const getContent = async (req: ResolverFunction) => {
   const pageId = req.payload;
   const response = await requestConfluence(`/wiki/rest/api/content/${pageId}?expand=body.storage,space`);
 
@@ -32,7 +47,7 @@ export const getContent = async (req: any) => {
   return await response.json();
 };
 
-export const getPageId = async (req: any) => {
+export const getPageId = async (req: ResolverFunction) => {
   const { spaceKey, title } = JSON.parse(req.payload);
   log('getPageId', spaceKey, title);
   const response = await requestConfluence(`/wiki/rest/api/content/search?cql=type=page AND space="${spaceKey}" AND title="${title}"&limit=1`);
@@ -41,7 +56,7 @@ export const getPageId = async (req: any) => {
   return await response.json();
 };
 
-export const contentProperty = async (req: any) => {
+export const contentProperty = async (req: ResolverFunction) => {
   const { method, id, PropertyKey, body } = JSON.parse(req.payload);
 
   const response = await requestConfluence(`/wiki/rest/api/content/${id}/property/${PropertyKey}`, {
@@ -55,7 +70,7 @@ export const contentProperty = async (req: any) => {
   return await response.json();
 };
 
-export const spaceProperty = async (req: any) => {
+export const spaceProperty = async (req: ResolverFunction) => {
   const { method, spaceKey, PropertyKey, body } = JSON.parse(req.payload);
 
   const response = await requestConfluence(`/wiki/rest/api/space/${spaceKey}/property/${PropertyKey}`, {
@@ -69,7 +84,7 @@ export const spaceProperty = async (req: any) => {
   return await response.json();
 };
 
-export const postMergeGraph = async (req: any) => {
+export const postMergeGraph = async (req: ResolverFunction) => {
   try {
     const { siteUrl } = req.context;
 
@@ -109,7 +124,7 @@ export const postMergeGraph = async (req: any) => {
   }
 };
 
-export const queryCypher = async (req: any) => {
+export const queryCypher = async (req: ResolverFunction) => {
   const { siteUrl } = req.context;
   let body = req.payload;
 
@@ -138,7 +153,7 @@ export const queryCypher = async (req: any) => {
   }
 };
 
-export const extractPageLinks = async (req: any) => {
+export const extractPageLinks = async (req: ResolverFunction) => {
   const body = req.payload;
   log('extractPageLinks:', body.slice(0, 24) + '...');
 

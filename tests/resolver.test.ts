@@ -16,7 +16,7 @@ describe('Example setup', () => {
 
 describe('Build connection graph', () => {
   it('Fetch and parse space information', async () => {
-    const response = await ResolveFunc.getSpaces({});
+    const response = await ResolveFunc.getSpaces();
     const results = response.results;
     expect(results).to.have.length;
 

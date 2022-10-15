@@ -25,7 +25,6 @@ const App = () => {
       const result: Record<string, unknown> = await invoke('getContext');
 
       setContext({
-        moduleKey: result.moduleKey as string,
         spinner: false,
         ...result,
       });
@@ -33,9 +32,6 @@ const App = () => {
       setContext({
         moduleKey: e.message,
         spinner: false,
-        accountId: null,
-        cloudId: null,
-        siteUrl: null,
       });
       console.error('Error: ', e.message);
     }

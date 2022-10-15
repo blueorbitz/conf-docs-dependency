@@ -1,7 +1,8 @@
 import { isForge } from ".";
+import type { RequestInit} from 'node-fetch';
 const { FORGE_EMAIL, FORGE_API_TOKEN, ATL_INSTANCE_URL } = process.env;
 
-const restRequestConfluence = async (path: string, options: any = {}) => {
+const restRequestConfluence = async (path: string, options: RequestInit = {}) => {
   const fetch = require('node-fetch');
 
   const headers = {
@@ -13,7 +14,7 @@ const restRequestConfluence = async (path: string, options: any = {}) => {
   });
 };
 
-const forgeRequestConfluence = async (path: string, options: any = {}) => {
+const forgeRequestConfluence = async (path: string, options: RequestInit = {}) => {
   const api = require('@forge/api');
   const { route } = api;
 

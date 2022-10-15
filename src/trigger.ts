@@ -3,10 +3,10 @@ import { getContent, extractPageLinks, queryCypher, getPageId } from './resolver
 
 export const onchange = async (event, context) => {
   const pageId = event.content.id;
-  const { page, body, siteUrl } = await retrieveBaseInfo(pageId);
+  const { page, body, siteUrl } = await retrieveBaseInfo(context, pageId);
   context.siteUrl = siteUrl;
 
-  const extract = await extractPageLinks({ payload: body });
+  const extract = await extractPageLinks({ payload: body, context });
   const { jira: jiraNew, links: extUrlNew, conf: confNew } = extract;
 
   // fetch neo4j existing graph for this node
@@ -33,8 +33,8 @@ export const onchange = async (event, context) => {
   return true;
 };
 
-const retrieveBaseInfo = async (pageId) => {
-  const page = await getContent({ payload: pageId });
+const retrieveBaseInfo = async (context, pageId: string) => {
+  const page = await getContent({ payload: pageId, context });
 
   let siteUrl = '';
   if (isForge())
@@ -136,7 +136,7 @@ const _processConf = async (context, { page, confNew, confNodes }) => {
   const space = page.space.key;
 
   const response = await Promise.all(confNew.map(({ spaceKey, title }) => {
-    return getPageId({ payload: JSON.stringify({ spaceKey: spaceKey || space, title }) })
+    return getPageId({ payload: JSON.stringify({ spaceKey: spaceKey || space, title }), context })
   }));
 
   // @ts-ignore: disable temporary as we are convinces that results will always have value

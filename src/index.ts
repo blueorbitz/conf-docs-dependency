@@ -1,5 +1,6 @@
 import Resolver from '@forge/resolver';
 import * as ResolveFunc from './resolver';
+import type { ResolverFunction } from './resolver';
 import * as TriggerFunc from './trigger';
 
 const resolver = new Resolver();
@@ -38,8 +39,8 @@ export const invoker = async (req) => {
     },
   ];
   const MOCK_MODULE = ModuleList[MOCK_INDEX];
-  const MOCK_EXTENSION = ModuleExtension[MOCK_INDEX]
-  const result = await ResolveFunc[_name]({
+  const MOCK_EXTENSION = ModuleExtension[MOCK_INDEX];
+  const resolverArg: ResolverFunction = {
     payload: _payload,
     context: {
       cloudId: '{{uuid}}',        
@@ -50,7 +51,9 @@ export const invoker = async (req) => {
       extension: MOCK_EXTENSION,
       accountId: '70121:{{uuid}}'
     },
-  });
+  };
+
+  const result = await ResolveFunc[_name](resolverArg);
 
   return {
     statusCode: 200,
