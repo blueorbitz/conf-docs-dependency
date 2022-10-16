@@ -19,6 +19,11 @@ modules:
         function: resolver
       title: Glance dependency
       tooltip: Quick glance to see other page that has mention this page.
+      displayConditions:
+        entityPropertyEqualTo:
+          entity: content
+          propertyKey: conf_link_graph
+          value: loaded
   webtrigger:
     - key: mock-invoke
       function: invoker
