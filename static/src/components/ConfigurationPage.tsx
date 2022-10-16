@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import styled from 'styled-components';
 import { invoke, delay, log } from '../utils';
 import {
   PropertyKey, PropertyValue,
@@ -16,6 +17,7 @@ import Button from '@atlaskit/button/standard-button';
 import Spinner from '@atlaskit/spinner';
 import TableTree from '@atlaskit/table-tree';
 import ProgressBar from '@atlaskit/progress-bar';
+import { Checkbox } from '@atlaskit/checkbox';
 import Modal, {
   ModalBody,
   ModalFooter,
@@ -24,6 +26,14 @@ import Modal, {
   ModalTransition,
 } from '@atlaskit/modal-dialog';
 
+const TableStyled = styled.div`
+  display: flex;
+  flexDirection: column;
+  alignItems: flex-start;
+  width: 400px;
+  maxWidth: 100%;
+  margin: 0 auto;
+`;
 
 const ConfigurationPage = () => {
   const [spaces, setSpaces] = useState();
@@ -34,7 +44,12 @@ const ConfigurationPage = () => {
 
   const [isOpen, setIsOpen] = useState(false);
   const openModal = useCallback(() => setIsOpen(true), []);
-  const closeModal = useCallback(() => setIsOpen(false), []);
+  const closeModal = useCallback(() => {
+    setIsOpen(false);
+    if (seedCount === 1) // reset
+      setSeedCount(-1);
+  }, [seedCount]);
+  const checkedSpace = {};
 
   const fetchSpaces = async () => {
     const response = await invoke('getSpaces');
@@ -62,6 +77,9 @@ const ConfigurationPage = () => {
 
     try {
       for (const space of spaces ?? []) {
+        if (checkedSpace[space.key] !== true)
+          continue;
+
         setSeedMessage(`Fetching page for "${space.key}"...`);
         const contents = await invoke('getContents', space.key);
         const { page: { results: pages = [] } } = contents;
@@ -103,6 +121,9 @@ const ConfigurationPage = () => {
 
     try {
       for (const space of spaces ?? []) {
+        if (checkedSpace[space.key] !== true)
+          continue;
+
         await invoke('spaceProperty', { method: 'DELETE', spaceKey: space.key, PropertyKey });
 
         const contents = await invoke('getContents', space.key);
@@ -129,7 +150,7 @@ const ConfigurationPage = () => {
       return;
 
     setResetLoading(true);
-    
+
     try {
       const cypher = 'MATCH (n {instance: "::instance::"}) DETACH DELETE n;';
       console.log(await invoke('queryCypher', cypher));
@@ -152,7 +173,7 @@ const ConfigurationPage = () => {
         {
           resetLoading
             ? <React.Fragment>Resetting <Spinner size="small" /></React.Fragment>
-            : 'Reset Graph'
+            : 'Reset Graph (All Space)'
         }
       </Button>
       <Button onClick={onClickResetProperty} isDisabled={resetLoading}>
@@ -173,7 +194,13 @@ const ConfigurationPage = () => {
   );
 
   // Table component
-  const Space = (props) => <span>{props.name}</span>;
+  const Space = (props) => <Checkbox
+    value={props.name}
+    label={props.name}
+    onChange={e => checkedSpace[props.name] = e.currentTarget.checked}
+    name={props.name}
+    testId={props.name}
+  />;
   const Loaded = (props) => <span>{props.loaded}</span>;
   const items = (spaces ?? []).map(o => ({
     id: '' + o.id,
@@ -197,12 +224,14 @@ const ConfigurationPage = () => {
           {
             spaces == null
               ? <Spinner size="large" />
-              : <TableTree
-                columns={[Space, Loaded]}
-                headers={['Space', 'Loaded']}
-                columnWidths={['250px', '100px']}
-                items={items}
-              />
+              : <TableStyled>
+                <TableTree
+                  columns={[Space, Loaded]}
+                  headers={['Space to take action on', '']}
+                  columnWidths={['250px', '100px']}
+                  items={items}
+                />
+              </TableStyled>
           }
         </Main>
 

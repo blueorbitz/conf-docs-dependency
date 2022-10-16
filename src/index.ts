@@ -20,7 +20,7 @@ export const invoker = async (req) => {
   const _name = name;
   const _payload = payload;
 
-  const MOCK_INDEX = 2;
+  const MOCK_INDEX = 0;
   const ModuleList = ['setup-space', 'visual-space', 'quick-glance'];
   const ModuleExtension = [
     {
