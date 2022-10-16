@@ -5,17 +5,17 @@ const MOCK_EVENT = {
   atlassianId: '70121:{{uuid}}',
   suppressNotifications: false,
   content: {
-    // Update sample
+    // // Update sample
+    // id: '557075',
+    // type: 'page',
+    // status: 'current',
+    // title: 'My nested nest page',
+
+    // Create Sample
     id: '2424833',
     type: 'page',
     status: 'current',
-    title: 'My nested nest page',
-
-    // Create Sample
-    // id: '2424833',
-    // type: 'page',
-    // status: 'current',
-    // title: 'Test New Page',
+    title: 'Test New Page',
 
     space: {
       id: 65650,

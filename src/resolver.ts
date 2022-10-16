@@ -155,16 +155,24 @@ export const queryCypher = async (req: ResolverFunction) => {
 
 export const extractPageLinks = async (req: ResolverFunction) => {
   const body = req.payload;
+  const siteUrl = req.context.siteUrl;
   log('extractPageLinks:', body.slice(0, 24) + '...');
 
   const extractLink = (_body) => {
+    const regexJiraLink = new RegExp(`${siteUrl}\/browse\/\\S+-\\d+`, 'g');
+
     return [...body.matchAll(/href="(\S{7,})"/g)]
       .map(o => o[1])
+      .filter(url => !url.match(regexJiraLink))
       .filter((value, index, self) => self.indexOf(value) === index); // unique
   };
 
   const extractJira = (_body) => {
-    return [...body.matchAll(/<ac:parameter ac:name="key">(\S+)<\/ac:parameter>/g)]
+    const regexJiraHref = new RegExp(`href="${siteUrl}\/browse\/(\\S+-\\d+)"`, 'g');
+    return [
+      ...body.matchAll(/<ac:parameter ac:name="key">(\S+)<\/ac:parameter>/g),
+      ...body.matchAll(regexJiraHref),
+    ]
       .map(o => o[1])
       .filter((value, index, self) => self.indexOf(value) === index); // unique
   };

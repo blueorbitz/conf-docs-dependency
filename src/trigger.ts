@@ -64,9 +64,11 @@ const _processJira = async (context, { page, jiraNew, jiraNodes }) => {
 
   // new - intersect = create
   const toCreate = jiraNew.filter(o => !intersect.includes(o));
+  log('toCreate', toCreate);
 
   // cur - intersect = delete
   const toDelete = jiraNodes.map(o => o.properties.issueKey).filter(o => !intersect.includes(o));
+  log('toDelete', toDelete);
 
   // build cypher syntax
   let query = '';
@@ -103,9 +105,11 @@ const _processExtUrl = async (context, { page, extUrlNew, extUrlNodes }) => {
 
   // new - intersect = create
   const toCreate = extUrlNew.filter(o => !intersect.includes(o));
+  log('toCreate', toCreate);
 
   // cur - intersect = delete
   const toDelete = extUrlNodes.map(o => o.properties.url).filter(o => !intersect.includes(o));
+  log('toDelete', toDelete);
 
   // build cypher syntax
   let query = '';
