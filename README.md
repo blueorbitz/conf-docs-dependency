@@ -37,6 +37,10 @@ forge deploy
 forge install
 ```
 
+- Setup backend serverless neo4j-api
+  + deploy to [vercel](https://vercel.com)
+  + insert the environment variables `NEO4J_CONNECTION`, `NEO4J_PASSWORD`.
+
 ### Development
 [Tunneling with Custom UI](https://developer.atlassian.com/platform/forge/tunneling/#tunneling-with-custom-ui)
 
