@@ -11,6 +11,8 @@ import {
 import PageHeader from '@atlaskit/page-header';
 import TableTree from '@atlaskit/table-tree';
 import * as vis from 'vis-network';
+import Button from '@atlaskit/button';
+import { router } from '@forge/bridge';
 
 const RelativePostition = styled.div`
   position: relative;
@@ -141,6 +143,20 @@ const VisualizeNodePage = () => {
     setNetwork(_network);
   };
 
+  const handleRedirect = (node) => {
+    if (node['url']) {
+      router.open(node['url']);
+    }
+
+    if (node['issueKey']) {
+      router.open(`/browse/${node['issueKey']}`);
+    }
+
+    if (node['space'] && node['id']) {
+      router.open(`/wiki/spaces/${node['space']}/pages/${node['id']}/`);
+    }
+  } 
+
   useEffect(() => {
     initVis();
     fetchSpaces();
@@ -194,6 +210,7 @@ const VisualizeNodePage = () => {
                   children: [],
                 }))}
               />
+              <Button onClick={() => handleRedirect(selectedNode)} appearance="primary" style={{ marginTop: '30px' }}>Open Link</Button>
             </>
           )}
         </Main>
