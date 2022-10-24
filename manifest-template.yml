@@ -30,7 +30,7 @@ modules:
   scheduledTrigger:
     - key: neo4j-scheduled-trigger
       function: neo4j-trigger
-      interval: hour
+      interval: day
   trigger:
     - key: change-trigger
       events:
