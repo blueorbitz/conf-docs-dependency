@@ -27,6 +27,10 @@ modules:
   webtrigger:
     - key: mock-invoke
       function: invoker
+  scheduledTrigger:
+    - key: neo4j-scheduled-trigger
+      function: neo4j-trigger
+      interval: hour
   trigger:
     - key: change-trigger
       events:
@@ -38,6 +42,8 @@ modules:
       handler: index.handler
     - key: invoker
       handler: index.invoker
+    - key: neo4j-trigger
+      handler: index.neo4jTrigger
     - key: onchange
       handler: index.onchange
 resources:

@@ -64,4 +64,15 @@ export const invoker = async (req) => {
   };
 }
 
+export const neo4jTrigger = async (req) => {
+  console.log("Calling neo4j api...");
+  const { VERCEL_NEO4J_SERVERLESS_URL } = process.env;
+  await fetch(VERCEL_NEO4J_SERVERLESS_URL + `/api`, {
+    method: 'post',
+    body: 'MATCH p = (page:PAGE)-[:LINKS]->(linkTo) WHERE page.instance="::instance::" RETURN p;',
+    headers: { 'Content-Type': 'text/plain' }
+  });
+  console.log("neo4j api called.");
+}
+
 export const onchange = TriggerFunc.onchange;
