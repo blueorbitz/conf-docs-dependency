@@ -25,14 +25,12 @@ import Modal, {
   ModalTitle,
   ModalTransition,
 } from '@atlaskit/modal-dialog';
+import CheckCircleIcon from '@atlaskit/icon/glyph/check-circle'
+import CrossCircleIcon from '@atlaskit/icon/glyph/cross-circle'
 
 const TableStyled = styled.div`
-  display: flex;
-  flexDirection: column;
-  alignItems: flex-start;
-  width: 400px;
-  maxWidth: 100%;
-  margin: 0 auto;
+  border: 3px solid #dfe1e6;
+  margin: auto;
 `;
 
 const ConfigurationPage = () => {
@@ -208,7 +206,7 @@ const ConfigurationPage = () => {
       name: o.key,
       loaded: o.property == null
         ? <Spinner size="small" />
-        : (o.property.value === 'loaded' ? '✅' : '❌'),
+        : (o.property.value === 'loaded' ? <CheckCircleIcon label="✅" primaryColor="green" /> : <CrossCircleIcon label="❌" primaryColor="red" />),
     },
     hasChildren: false,
     children: [],
@@ -219,7 +217,7 @@ const ConfigurationPage = () => {
       <Content testId="content">
         <Main testId="main" id="main" skipLinkTitle="Main Content">
           <PageHeader actions={actionsContent} >
-            Conf Docs Dependency | Setup
+            Setup Pages
           </PageHeader>
           {
             spaces == null
@@ -227,8 +225,8 @@ const ConfigurationPage = () => {
               : <TableStyled>
                 <TableTree
                   columns={[Space, Loaded]}
-                  headers={['Space to take action on', '']}
-                  columnWidths={['250px', '100px']}
+                  headers={['Spaces', 'Status']}
+                  columnWidths={['500px', '500px']}
                   items={items}
                 />
               </TableStyled>

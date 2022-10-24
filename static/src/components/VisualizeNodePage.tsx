@@ -14,12 +14,12 @@ import * as vis from 'vis-network';
 
 const RelativePostition = styled.div`
   position: relative;
+  padding: 10px 0 10px 0;
 `;
 
 const VisDiv = styled.div`
-  width: ${props => props.theme.width}px;
-  height: ${props => props.theme.height}px;
-  border: 1px solid lightgray;
+  height: ${props => props.theme.height * 1.5}px;
+  border: 1px solid #dfe1e6;
   font: 22pt arial;
 `;
 
@@ -164,7 +164,6 @@ const VisualizeNodePage = () => {
           <PageHeader>
             Visualize Connections
           </PageHeader>
-          <label htmlFor="multi-select-example">Select spaces to visualize connection?</label>
           <Select
             inputId="multi-select-example"
             className="multi-select"
@@ -174,25 +173,29 @@ const VisualizeNodePage = () => {
             options={spaces.map(space => ({ label: space.name, value: space.key }))}
             isMulti
             isSearchable={false}
-            placeholder="Choose a space to start"
+            placeholder="Select Space"
           />
-          <p></p>
+          <br />
           <RelativePostition>
             {resizeListener}
             <VisDiv id="vis" ref={visRef} theme={visSize} />
           </RelativePostition>
-          <p></p>
-          <TableTree
-            columns={[(props) => <span>{props.property}</span>, (props) => <span>{props.value}</span>]}
-            headers={['Property', 'Value']}
-            columnWidths={['150px', '']}
-            items={Object.entries(selectedNode).map(([key, value]) => ({
-              id: key,
-              content: { property: key, value },
-              hasChildren: false,
-              children: [],
-            }))}
-          />
+          {Object.keys(selectedNode).length > 0 && (
+            <>
+              <br />
+              <TableTree
+                columns={[(props) => <span>{props.property}</span>, (props) => <span>{props.value}</span>]}
+                headers={['Property', 'Value']}
+                columnWidths={['500px', '500px']}
+                items={Object.entries(selectedNode).map(([key, value]) => ({
+                  id: key,
+                  content: { property: key, value },
+                  hasChildren: false,
+                  children: [],
+                }))}
+              />
+            </>
+          )}
         </Main>
       </Content>
     </PageLayout>
