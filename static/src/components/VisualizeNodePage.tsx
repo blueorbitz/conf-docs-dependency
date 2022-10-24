@@ -9,10 +9,9 @@ import {
   PageLayout,
 } from '@atlaskit/page-layout';
 import PageHeader from '@atlaskit/page-header';
-import TableTree from '@atlaskit/table-tree';
 import * as vis from 'vis-network';
-import Button from '@atlaskit/button';
 import { router } from '@forge/bridge';
+import SectionMessage, { SectionMessageAction } from '@atlaskit/section-message';
 
 const RelativePostition = styled.div`
   position: relative;
@@ -157,6 +156,34 @@ const VisualizeNodePage = () => {
     }
   } 
 
+  const renderTitle = (node) => {
+    let title = '';
+
+    if (node['url']) {
+      title = `External url: <b>${node['hostname']}</b>`;
+    }
+
+    if (node['issueKey']) {
+      title = `Jira issue key: <b>${node['issueKey']}</b>`;
+    }
+
+    if (node['space'] && node['id']) {
+      title = `Confluence page title: <b>${node['title']}</b>`;
+    }
+
+    return (
+      <div style={{ marginTop: '10px' }}>
+        <SectionMessage
+          actions={[
+            <SectionMessageAction onClick={() => handleRedirect(node)}>Open Link</SectionMessageAction>,
+          ]}
+        >
+          <p dangerouslySetInnerHTML={{ __html: title }}></p>
+        </SectionMessage>
+      </div>
+    );
+  }
+
   useEffect(() => {
     initVis();
     fetchSpaces();
@@ -191,28 +218,11 @@ const VisualizeNodePage = () => {
             isSearchable={false}
             placeholder="Select Space"
           />
-          <br />
+          {Object.keys(selectedNode).length > 0 && renderTitle(selectedNode)}
           <RelativePostition>
             {resizeListener}
             <VisDiv id="vis" ref={visRef} theme={visSize} />
           </RelativePostition>
-          {Object.keys(selectedNode).length > 0 && (
-            <>
-              <br />
-              <TableTree
-                columns={[(props) => <span>{props.property}</span>, (props) => <span>{props.value}</span>]}
-                headers={['Property', 'Value']}
-                columnWidths={['500px', '500px']}
-                items={Object.entries(selectedNode).map(([key, value]) => ({
-                  id: key,
-                  content: { property: key, value },
-                  hasChildren: false,
-                  children: [],
-                }))}
-              />
-              <Button onClick={() => handleRedirect(selectedNode)} appearance="primary" style={{ marginTop: '30px' }}>Open Link</Button>
-            </>
-          )}
         </Main>
       </Content>
     </PageLayout>
