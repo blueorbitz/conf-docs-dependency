@@ -10,7 +10,7 @@ import {
 } from '@atlaskit/page-layout';
 import PageHeader from '@atlaskit/page-header';
 import * as vis from 'vis-network';
-import { router } from '@forge/bridge';
+// import { router } from '@forge/bridge';
 import SectionMessage, { SectionMessageAction } from '@atlaskit/section-message';
 
 const RelativePostition = styled.div`
@@ -24,7 +24,11 @@ const VisDiv = styled.div`
   font: 22pt arial;
 `;
 
-const VisualizeNodePage = () => {
+const SectionDiv = styled.div`
+  margin-top: 10px;
+`;
+
+const VisualizeNodePage = ({ context }) => {
   // let network = null;
   let nodes = [];
   let edges = [];
@@ -142,45 +146,35 @@ const VisualizeNodePage = () => {
     setNetwork(_network);
   };
 
-  const handleRedirect = (node) => {
-    if (node['url']) {
-      router.open(node['url']);
-    }
-
-    if (node['issueKey']) {
-      router.open(`/browse/${node['issueKey']}`);
-    }
-
-    if (node['space'] && node['id']) {
-      router.open(`/wiki/spaces/${node['space']}/pages/${node['id']}/`);
-    }
-  };
-
   const renderTitle = (node) => {
     let title = '';
+    let href = '';
 
-    if (node['url']) {
-      title = `External url: <b>${node['hostname']}</b>`;
+    if (node.url != null) {
+      title = `External url: <b>${node.url}</b>`;
+      href = node.url;
     }
 
-    if (node['issueKey']) {
-      title = `Jira issue key: <b>${node['issueKey']}</b>`;
+    if (node.issueKey != null) {
+      title = `Jira issue key: <b>${node.issueKey}</b>`;
+      href = `${context.siteUrl}/browse/${node.issueKey}`;
     }
 
-    if (node['space'] && node['id']) {
-      title = `Confluence page title: <b>${node['title']}</b>`;
+    if (node.space != null && node.id != null) {
+      title = `Confluence page title: <b>${node.title}</b>`;
+      href = `${context.siteUrl}/wiki/spaces/${node.space}/pages/${node.id}/`;
     }
 
     return (
-      <div style={{ marginTop: '10px' }}>
+      <SectionDiv>
         <SectionMessage
           actions={[
-            <SectionMessageAction onClick={() => handleRedirect(node)}>Open Link</SectionMessageAction>,
+            <SectionMessageAction href={href}>Open Link</SectionMessageAction>,
           ]}
         >
           <p dangerouslySetInnerHTML={{ __html: title }}></p>
         </SectionMessage>
-      </div>
+      </SectionDiv>
     );
   };
 

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { invoke } from '../utils';
-import { router } from '@forge/bridge';
 
 const PNoMargin = styled.p`
   margin-top: 0px;
@@ -41,7 +40,7 @@ const QuickGlancePage = ({ context }) => {
     <ul>
       {connectedPage.map(o => {
         return <li>
-          <a onClick={() => router.open(`/wiki/spaces/${o.space}/pages/${o.pageId}/`)}><strong>{o.title}</strong></a>
+          <a href={`${context.siteUrl}/wiki/spaces/${o.space}/pages/${o.pageId}/`}><strong>{o.title}</strong></a>
           <br />
           <small>{o.space}</small>
         </li>;

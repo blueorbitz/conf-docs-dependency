@@ -46,7 +46,7 @@ const App = () => {
         case 'setup-space':
           return <ConfigurationPage />;
         case 'visual-space':
-          return <VisualizeNodePage />;
+          return <VisualizeNodePage context={context} />;
         case 'quick-glance':
           return <QuickGlancePage context={context} />;
         default:
