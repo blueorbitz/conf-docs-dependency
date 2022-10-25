@@ -68,10 +68,9 @@ permissions:
   external:
     fetch:
       backend:
-        - 'serverless-neo4j-api.vercel.app'
+        - '{{NEO4J_REST_ENDPOINT}}'
       client:
         - '*.hello.atlassian-dev.net'
-        - '*.databases.neo4j.io'
 app:
   id: ari:cloud:ecosystem::app/{{FORGE_APP_ID}}
   runtime:
