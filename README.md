@@ -86,7 +86,3 @@ See [Get help](https://developer.atlassian.com/platform/forge/get-help/) for how
 ```
 npm run test
 ```
-
-
-### TODO
-continue to fix neo4j updating at `resolver.ts` 

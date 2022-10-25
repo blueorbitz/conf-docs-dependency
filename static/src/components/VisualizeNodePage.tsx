@@ -66,12 +66,12 @@ const VisualizeNodePage = () => {
     edges = [...new Map(edges.map((item) => [item['id'], item])).values()];
   };
 
-  const updateVisData = (p) => {    
+  const updateVisData = (p) => {
     const { _fields: [v] } = p;
-  
+
     const buildNodeVisObject = (node) => {
       let label, group;
-      switch(node.labels[0]) {
+      switch (node.labels[0]) {
         case 'PAGE':
           label = node.properties.title;
           group = node.properties.space;
@@ -92,17 +92,17 @@ const VisualizeNodePage = () => {
         raw: node,
       };
     };
-  
+
     const buildEdgeVisObject = (edge) => ({
       id: parseInt(edge.elementId),
       from: parseInt(edge.startNodeElementId),
       to: parseInt(edge.endNodeElementId),
       raw: edge,
     });
-  
+
     nodes.push(buildNodeVisObject(v.start));
     nodes.push(buildNodeVisObject(v.end));
-  
+
     for (const obj of v.segments) {
       nodes.push(buildNodeVisObject(obj.start));
       nodes.push(buildNodeVisObject(obj.end));
@@ -113,7 +113,7 @@ const VisualizeNodePage = () => {
   const initVis = async () => {
     const record = await fetchGraph();
     updateNodeAndEdge(record);
-  
+
     // create a network
     const container = document.getElementById('vis');
     const data = {
@@ -154,7 +154,7 @@ const VisualizeNodePage = () => {
     if (node['space'] && node['id']) {
       router.open(`/wiki/spaces/${node['space']}/pages/${node['id']}/`);
     }
-  } 
+  };
 
   const renderTitle = (node) => {
     let title = '';
@@ -182,7 +182,7 @@ const VisualizeNodePage = () => {
         </SectionMessage>
       </div>
     );
-  }
+  };
 
   useEffect(() => {
     initVis();

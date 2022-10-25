@@ -25,8 +25,8 @@ import Modal, {
   ModalTitle,
   ModalTransition,
 } from '@atlaskit/modal-dialog';
-import CheckCircleIcon from '@atlaskit/icon/glyph/check-circle'
-import CrossCircleIcon from '@atlaskit/icon/glyph/cross-circle'
+import CheckCircleIcon from '@atlaskit/icon/glyph/check-circle';
+import CrossCircleIcon from '@atlaskit/icon/glyph/cross-circle';
 
 const TableStyled = styled.div`
   border: 3px solid #dfe1e6;
