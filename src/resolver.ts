@@ -160,10 +160,12 @@ export const extractPageLinks = async (req: ResolverFunction) => {
 
   const extractLink = (_body) => {
     const regexJiraLink = new RegExp(`${siteUrl}\/browse\/\\S+-\\d+`, 'g');
+    const regexHttpUrl = new RegExp(`^https?:\/\/.*`, 'g');
 
     return [...body.matchAll(/href="(\S{7,})"/g)]
       .map(o => o[1])
-      .filter(url => !url.match(regexJiraLink))
+      .filter(url => !url.match(regexJiraLink)) // remove Jira
+      .filter(url => url.match(regexHttpUrl)) // remove local
       .filter((value, index, self) => self.indexOf(value) === index); // unique
   };
 
