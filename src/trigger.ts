@@ -1,8 +1,22 @@
 import { isForge, log, cypher } from './utils';
-import { getContent, extractPageLinks, queryCypher, getPageId } from './resolver';
+import { getContent, extractPageLinks, queryCypher, getPageId, spaceProperty } from './resolver';
+
+export const PropertyKey = 'conf_link_graph';
 
 export const onchange = async (event, context) => {
   const pageId = event.content.id;
+  const spaceKey = event.content.space.key;
+
+  const spacePropLoaded = await spaceProperty({
+    payload: JSON.stringify({
+      method: 'GET', spaceKey, PropertyKey
+    }),
+    context,
+  });
+
+  if (spacePropLoaded.status === 404) // space prop is not loaded. Should do nothing
+    return false;
+
   const { page, body, siteUrl } = await retrieveBaseInfo(context, pageId);
   context.siteUrl = siteUrl;
 
