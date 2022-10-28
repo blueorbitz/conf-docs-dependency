@@ -8,6 +8,7 @@ import Spinner from '@atlaskit/spinner';
 import ConfigurationPage from './components/ConfigurationPage';
 import VisualizeNodePage from './components/VisualizeNodePage';
 import QuickGlancePage from './components/QuickGlancePage';
+import InOutboundPage from './components/InOutboundPage';
 
 const SpinnerDiv = styled.div`
   position: fixed;
@@ -49,6 +50,8 @@ const App = () => {
           return <VisualizeNodePage context={context} />;
         case 'quick-glance':
           return <QuickGlancePage context={context} />;
+        case 'dependency-macro':
+          return <InOutboundPage context={context} />;
         default:
           return <>Some error had been occured. {context.moduleKey}</>;
       }

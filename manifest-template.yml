@@ -24,6 +24,13 @@ modules:
           entity: content
           propertyKey: conf_link_graph
           value: loaded
+  macro:
+    - key: page-dependency
+      title: Docs Dependency
+      description: Show the inbound and outbound links for this docusments
+      resource: main
+      resolver:
+        function: resolver
   webtrigger:
     - key: mock-invoke
       function: invoker

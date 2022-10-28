@@ -86,3 +86,8 @@ See [Get help](https://developer.atlassian.com/platform/forge/get-help/) for how
 ```
 npm run test
 ```
+
+## Publishing
+```
+forge deploy -e production
+```

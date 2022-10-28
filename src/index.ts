@@ -20,8 +20,8 @@ export const invoker = async (req) => {
   const _name = name;
   const _payload = payload;
 
-  const MOCK_INDEX = 0;
-  const ModuleList = ['setup-space', 'visual-space', 'quick-glance'];
+  const MOCK_INDEX = 3;
+  const ModuleList = ['setup-space', 'visual-space', 'quick-glance', 'dependency-macro'];
   const ModuleExtension = [
     {
       type: 'confluence:spacePage'
@@ -34,6 +34,13 @@ export const invoker = async (req) => {
       content: {
         id: '557075',
         type: 'page',
+      },
+      space: { key: 'STRAWHAT' },
+    },
+    {
+      type: 'macro',
+      content: {
+        id: '557075',
       },
       space: { key: 'STRAWHAT' },
     },
