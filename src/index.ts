@@ -50,8 +50,8 @@ export const invoker = async (req) => {
   const resolverArg: ResolverFunction = {
     payload: _payload,
     context: {
-      cloudId: '{{uuid}}',        
-      environmentId: '{{uuid}}',  
+      cloudId: '{{uuid}}',
+      environmentId: '{{uuid}}',
       environmentType: 'DEVELOPMENT',
       moduleKey: MOCK_MODULE,
       siteUrl: 'https://subdomain.atlassian.net',

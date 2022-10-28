@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import useResizeAware from 'react-resize-aware';
-import { invoke } from '../utils';
+import { invoke, debounce } from '../utils';
 import styled from 'styled-components';
-import Select from '@atlaskit/select';
+import Select, { AsyncSelect } from '@atlaskit/select';
 import {
   Content,
   Main,
@@ -37,6 +37,7 @@ const VisualizeNodePage = ({ context }) => {
   const [spaces, setSpaces] = useState([]);
   const [selectedSpace, setSelectedSpace] = useState([]);
   const [selectedNode, setSelectedNode] = useState({});
+  const [selectedPageId, setSelectedPageId] = useState(null);
   const visRef = useRef();
   const [resizeListener, sizes] = useResizeAware();
 
@@ -46,9 +47,33 @@ const VisualizeNodePage = ({ context }) => {
     setSpaces(spaces);
   };
 
+  const fetchPageOptionsDebounced = useCallback(
+    debounce((inputValue: string, callback: (options: any) => void) => {
+      fetchPageOptions(inputValue).then(options => callback(options));
+    }, 700),
+    []
+  );
+
+  const fetchPageOptions = async (title: string) => {
+    if (title.length < 4)
+      return [];
+
+    const cqlResponse = await invoke('searchTitle', { title });
+    return cqlResponse.results.map(o => ({
+      label: o.title,
+      value: o.id,
+    }));
+  };
+
   const fetchGraph = async () => {
     let cypher = '';
-    if (selectedSpace.length) {
+    if (selectedPageId !== null) {
+      cypher = `MATCH p = (page:PAGE)-[:LINKS*1..2]-(linkTo)
+        WHERE page.id="${selectedPageId.value}"
+        AND page.instance="::instance::"
+        RETURN p;`;
+    }
+    else if (selectedSpace.length) {
       cypher = `MATCH p = (page:PAGE)-[:LINKS]->(linkTo)
         WHERE page.space IN ${JSON.stringify(selectedSpace.map(o => o.value))}
         AND page.instance="::instance::"
@@ -132,6 +157,11 @@ const VisualizeNodePage = ({ context }) => {
       },
       edges: {
         width: 1,
+        arrows: {
+          to: {
+            enabled: true,
+          },
+        },
       },
     };
 
@@ -183,14 +213,20 @@ const VisualizeNodePage = ({ context }) => {
     fetchSpaces();
   }, []);
 
+  const notInitialRender = useRef(false);
   useEffect(() => {
+    if (!notInitialRender.current) {
+      notInitialRender.current = true;
+      return;
+    }
+
     (async () => {
       const record = await fetchGraph();
       updateNodeAndEdge(record);
       network.setData({ nodes, edges });
       network.redraw();
     })();
-  }, [selectedSpace]);
+  }, [selectedSpace, selectedPageId]);
 
   const visSize = { width: sizes.width - 50, height: 350 };
 
@@ -212,6 +248,17 @@ const VisualizeNodePage = ({ context }) => {
             isSearchable={false}
             placeholder="Select Space"
           />
+          <SectionDiv>
+            <AsyncSelect
+              inputId="async-select-example"
+              placeholder="Search confluence page"
+              cacheOptions
+              defaultOptions
+              isClearable={true}
+              onChange={value => setSelectedPageId(value as any)}
+              loadOptions={fetchPageOptionsDebounced}
+            />
+          </SectionDiv>
           {Object.keys(selectedNode).length > 0 && renderTitle(selectedNode)}
           <RelativePostition>
             {resizeListener}

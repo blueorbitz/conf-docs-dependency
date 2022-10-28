@@ -56,6 +56,15 @@ export const getPageId = async (req: ResolverFunction) => {
   return await response.json();
 };
 
+export const searchTitle = async (req: ResolverFunction) => {
+  const { title } = JSON.parse(req.payload);
+  log('searchTitle', title);
+  const response = await requestConfluence(`/wiki/rest/api/content/search?cql=type=page AND title~"${title}"&limit=8`);
+
+  log(`searchTitle: ${response.status} ${response.statusText}`);
+  return await response.json();
+};
+
 export const contentProperty = async (req: ResolverFunction) => {
   const { method, id, PropertyKey, body } = JSON.parse(req.payload);
 
