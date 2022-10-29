@@ -12,6 +12,9 @@ import PageHeader from '@atlaskit/page-header';
 import * as vis from 'vis-network';
 // import { router } from '@forge/bridge';
 import SectionMessage, { SectionMessageAction } from '@atlaskit/section-message';
+import { ButtonGroup } from '@atlaskit/button';
+import Button from '@atlaskit/button/standard-button';
+import Spinner from '@atlaskit/spinner';
 
 const RelativePostition = styled.div`
   position: relative;
@@ -33,6 +36,7 @@ const VisualizeNodePage = ({ context }) => {
   let nodes = [];
   let edges = [];
 
+  const [resetLoading, setResetLoading] = useState(false);
   const [network, setNetwork] = useState(null);
   const [spaces, setSpaces] = useState([]);
   const [selectedSpace, setSelectedSpace] = useState([]);
@@ -140,40 +144,49 @@ const VisualizeNodePage = ({ context }) => {
   };
 
   const initVis = async () => {
-    const record = await fetchGraph();
-    updateNodeAndEdge(record);
+    setResetLoading(true);
 
-    // create a network
-    const container = document.getElementById('vis');
-    const data = {
-      nodes: nodes,
-      edges: edges,
-    };
-    const options = {
-      nodes: {
-        shape: 'dot',
-        size: 24,
-        borderWidth: 2,
-      },
-      edges: {
-        width: 1,
-        arrows: {
-          to: {
-            enabled: true,
+    try {
+      const record = await fetchGraph();
+      updateNodeAndEdge(record);
+
+      // create a network
+      const container = document.getElementById('vis');
+      const data = {
+        nodes: nodes,
+        edges: edges,
+      };
+      const options = {
+        nodes: {
+          shape: 'dot',
+          size: 24,
+          borderWidth: 2,
+        },
+        edges: {
+          width: 1,
+          arrows: {
+            to: {
+              enabled: true,
+            },
           },
         },
-      },
-    };
+      };
 
-    const _network = new vis.Network(container, data, options);
-    _network.on('selectNode', (e) => {
-      const clickedNode = nodes.find(o => o.id === e.nodes[0]);
-      // console.log('selectNode', clickedNode);
-      const displayNode = { ...clickedNode.raw.properties };
-      delete displayNode.instance;
-      setSelectedNode(displayNode);
-    });
-    setNetwork(_network);
+      const _network = new vis.Network(container, data, options);
+      _network.on('selectNode', (e) => {
+        const clickedNode = nodes.find(o => o.id === e.nodes[0]);
+        // console.log('selectNode', clickedNode);
+        const displayNode = { ...clickedNode.raw.properties };
+        delete displayNode.instance;
+        setSelectedNode(displayNode);
+      });
+      setNetwork(_network);
+
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const renderTitle = (node) => {
@@ -208,6 +221,25 @@ const VisualizeNodePage = ({ context }) => {
     );
   };
 
+
+  const onRefreshGraph = async () => {
+    if (resetLoading)
+      return;
+
+    setResetLoading(true);
+
+    try {
+      const record = await fetchGraph();
+      updateNodeAndEdge(record);
+      network.setData({ nodes, edges });
+      network.redraw();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   useEffect(() => {
     initVis();
     fetchSpaces();
@@ -220,12 +252,7 @@ const VisualizeNodePage = ({ context }) => {
       return;
     }
 
-    (async () => {
-      const record = await fetchGraph();
-      updateNodeAndEdge(record);
-      network.setData({ nodes, edges });
-      network.redraw();
-    })();
+    onRefreshGraph();
   }, [selectedSpace, selectedPageId]);
 
   const visSize = { width: sizes.width - 50, height: 350 };
@@ -234,7 +261,17 @@ const VisualizeNodePage = ({ context }) => {
     <PageLayout>
       <Content testId="content">
         <Main testId="main" id="main" skipLinkTitle="Main Content">
-          <PageHeader>
+          <PageHeader
+            actions={<ButtonGroup>
+              <Button onClick={onRefreshGraph} isDisabled={resetLoading}>
+                {
+                  resetLoading
+                    ? <Spinner size="small" />
+                    : 'Refresh Graph'
+                }
+              </Button>
+            </ButtonGroup>}
+          >
             Visualize Connections
           </PageHeader>
           <Select
