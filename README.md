@@ -1,5 +1,13 @@
-# Forge Hello World
+# Conf Docs Dependency
 
+Codegeist submission for [Conf Doc Dependency](https://devpost.com/software/content-dependency-analyzer)
+
+# What it does
+- This app stores and indexes all the links (URL only) within the Confluence's page. This is done by storing the relationship of how each of them is linked together.
+- The visualizer is added at strategic places for the content creator to study related and connected documents before making big changes to the page they are editing.
+- With the visualizer, they are also able to have a high-level overview and analyze patterns of how their important documents are connected with each other.
+
+# Build with Forge
 This project contains a Forge app written in Javascript that displays `Hello World!` in a Confluence space page. 
 
 See [developer.atlassian.com/platform/forge/](https://developer.atlassian.com/platform/forge) for documentation and tutorials explaining Forge.
